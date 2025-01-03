@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Check, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Pricing = () => {
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedPlan] = useState(null);
   const [showBetaForm, setShowBetaForm] = useState(false);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -59,16 +59,16 @@ const Pricing = () => {
     }
   ];
 
-  const handleSelectPlan = (planId) => {
-    console.log('Selected plan:', planId);
-    return;
-    if (planId === 'free') {
-      setSelectedPlan(planId);
-      setShowBetaForm(true);
-    }
-  };
+//   const handleSelectPlan = (planId: any) => {
+//     console.log('Selected plan:', planId);
+//     return;
+//     if (planId === 'free') {
+//       setSelectedPlan(planId);
+//       setShowBetaForm(true);
+//     }
+//   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     setIsSubmitting(true);
 

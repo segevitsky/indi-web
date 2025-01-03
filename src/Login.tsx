@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   signInWithEmailAndPassword, 
@@ -28,7 +28,7 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     setError('');
     
@@ -39,7 +39,7 @@ const LoginPage = () => {
         await createUserWithEmailAndPassword(auth, email, password);
       }
       navigate('/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
     }
   };
@@ -49,7 +49,7 @@ const LoginPage = () => {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       navigate('/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
     }
   };
