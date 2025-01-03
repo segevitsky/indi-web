@@ -8,22 +8,22 @@ export default function About() {
       </h2>
       <div className="grid md:grid-cols-3 gap-8">
         {[
-          {
-            title: 'Install Extension',
-            description: 'Add our Chrome extension to start mapping your APIs instantly',
-            icon: <Sun className="w-12 h-12 text-rose-500" />,
-          },
-          {
-            title: 'Map APIs',
-            description: 'Easily map and track API calls on your web applications',
-            icon: <Moon className="w-12 h-12 text-rose-500" />,
-          },
-          {
-            title: 'Monitor & Improve',
-            description: 'Get insights and optimize your API performance',
-            icon: <ChevronDown className="w-12 h-12 text-rose-500" />,
-          },
-        ].map((step, index) => (
+  {
+    title: 'Effortless API Visualization',
+    description: 'Transform your debugging experience with instant visual indicators that link UI elements to their API calls. No more digging through network logs - see exactly where and how your APIs interact with your interface',
+    icon: <Sun className="w-12 h-12 text-rose-500" />,
+  },
+  {
+    title: 'Smart Real-time Monitoring',
+    description: 'Watch your APIs perform in real-time with intelligent indicators that change color and status based on response times and success rates. Instantly spot issues before they impact your users',
+    icon: <Moon className="w-12 h-12 text-rose-500" />,
+  },
+  {
+    title: 'Seamless Integration & Collaboration',
+    description: 'One click to create detailed Jira tickets, complete with API context and performance data. Share insights with your team and track improvements - all without leaving your development workflow',
+    icon: <ChevronDown className="w-12 h-12 text-rose-500" />,
+  },
+].map((step, index) => (
           <div key={index} className="p-8 rounded-xl bg-white shadow-lg hover:shadow-xl transition-shadow">
             <div className="mb-6">{step.icon}</div>
             <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
