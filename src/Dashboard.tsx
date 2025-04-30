@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Settings, AlertCircle, Layout, BellDot } from 'lucide-react';
 import UserProfile from './UserProfile';
-import { getUserProfile } from './services/userService';
+import { getJiraConfig, getUserProfile, saveJiraConfig } from './services/userService';
 
 
 const Dashboard = () => {
@@ -29,6 +29,11 @@ const Dashboard = () => {
     isConnected: false
   });
   
+  
+  const [jiraSaveMessage, setJiraMessage] = useState({ type: '', text: '' });
+  const [slackSaveMessage, setSlackMessage] = useState({ type: '', text: '' });
+
+  
 
   // Mock subscription data - יוחלף בהמשך במידע מפיירבייס
 
@@ -45,6 +50,20 @@ const Dashboard = () => {
     };
     
     loadProfile();
+  }, []);
+
+  useEffect(() => {
+    const loadJiraConfig = async () => {
+      try {
+        // Load Jira configuration from the database or local storage
+        const jiraConfigData = await getJiraConfig(); // Replace with actual data fetching logic
+        setJiraConfig(jiraConfigData as any);
+      } catch (error) {
+        console.error('Error loading Jira configuration:', error);
+      }
+    };
+
+    loadJiraConfig();
   }, []);
   
 
@@ -114,6 +133,15 @@ const Dashboard = () => {
             </span>
           </div>
 
+          {jiraSaveMessage.text && (
+          <div className={`mb-4 p-3 rounded-lg text-sm flex items-center ${
+          jiraSaveMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+          }`}>
+          <AlertCircle className="w-4 h-4 mr-2" />
+          {jiraSaveMessage.text}
+          </div>
+        )}
+
           <form className="space-y-4">
             <div>
               <label className="block text-gray-700 mb-2">Jira Domain</label>
@@ -156,6 +184,17 @@ const Dashboard = () => {
             <button
               type="submit"
               className="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:opacity-90 transition-opacity"
+              onClick={(e) => {
+                e.preventDefault();
+                // Handle Jira configuration save logic here
+                setJiraConfig({...jiraConfig, isConnected: true});
+                saveJiraConfig(jiraConfig).then(() => {
+                  setJiraMessage({ type: 'success', text: 'Jira configuration updated successfully!' });
+                }).catch((error) => {
+                  console.error('Error saving Jira configuration:', error);
+                  setJiraMessage({ type: 'error', text: 'Failed to save Jira configuration' });
+                })
+              }}
             >
               Save Configuration
             </button>
@@ -203,7 +242,23 @@ const Dashboard = () => {
             </button>
           </form>
         </div>
+
+
+        {/* Allowed Domains */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold">Allowed Domains</h3>
+            <button
+              
+              className="px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:opacity-90 transition-opacity">
+              Add Domain
+            </button>  
+            </div>
+          </div>
+
+
       </div>
+      
     </div>
   );
 };
