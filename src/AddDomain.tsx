@@ -16,7 +16,7 @@ const mockUserData: any = {
 const DynamicDomainsForm = () => {
   const [domains, setDomains] = useState([{ id: '1', value: '', isValid: false }]);
   const [isLoading, setIsLoading] = useState(false);
-  const [userPlan, setUserPlan] = useState(mockUserData.plan);
+  const [userPlan] = useState(mockUserData.plan);
   const [toastMessage, setToastMessage] = useState({ show: false, type: '', text: '' });
   const navigate = useNavigate(); // Assuming you're using react-router-dom for navigation
 
