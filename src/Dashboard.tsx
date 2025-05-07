@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Settings, AlertCircle, Layout, BellDot } from 'lucide-react';
 import UserProfile from './UserProfile';
 import { getJiraConfig, getUserProfile, saveJiraConfig } from './services/userService';
+import DynamicDomainsForm from './AddDomain';
 
 
 const Dashboard = () => {
@@ -245,7 +246,8 @@ const Dashboard = () => {
 
 
         {/* Allowed Domains */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mt-8">
+        <DynamicDomainsForm />
+            {/* <div className="bg-white rounded-2xl shadow-lg p-6 mt-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold">Allowed Domains</h3>
             <button
@@ -254,7 +256,7 @@ const Dashboard = () => {
               Add Domain
             </button>  
             </div>
-          </div>
+          </div> */}
 
 
       </div>

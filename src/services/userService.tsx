@@ -96,3 +96,39 @@ export const getJiraConfig = async () => {
 };
 
 
+export const saveDomainsToDatabase = async (domains: any) => {
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No authenticated user');
+
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(userRef, {
+      domains: domains,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving domains:', error);
+    throw error;
+  }
+}
+
+export const getDomainsFromDatabase = async () => {
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No authenticated user');
+
+    const userRef = doc(db, 'users', user.uid);
+    const docSnap = await getDoc(userRef);
+    
+    if (docSnap.exists()) {
+      return docSnap.data().domains || [];
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error getting domains:', error);
+    throw error;
+  }
+};

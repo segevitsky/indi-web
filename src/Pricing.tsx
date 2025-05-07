@@ -25,7 +25,8 @@ const Pricing = () => {
         'All integrations included',
         'Priority beta access',
         'Shape the product roadmap',
-        'Early adopter benefits'
+        'Early adopter benefits',
+        '3 Allowed Domains'
       ],
       isAvailable: true
     },
