@@ -4,9 +4,21 @@ import ContactUs from './ContactUs'
 import FloatingIndicators from './Floatingindicators'
 import Navbar from './Navbar'
 import Pricing from './Pricing'
+import { useEffect } from 'react'
 
 export default function Home() {
 const navigate = useNavigate();
+
+
+useEffect(() => {
+  const hash = window.location.hash;
+  if (hash) {
+    const el = document.querySelector(hash);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+}, []);
 
   return (
     <>
