@@ -90,7 +90,7 @@ const Pricing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-50 py-12 px-4" id="pricing">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent mb-4">
