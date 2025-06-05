@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import vitelogo from "/bug.png";
 
 export default function Navbar() {
 const navigate = useNavigate();
@@ -6,6 +7,7 @@ const navigate = useNavigate();
     <nav className="fixed top-0 w-full bg-white bg-opacity-80 backdrop-blur-sm z-50 shadow-sm">
     <div className="container mx-auto px-6 py-4 flex items-center justify-between">
       <div className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">
+      <img src={vitelogo} alt="Vite Logo" className="inline-block h-8 w-8 mr-2" />
         indi mapper
       </div>
       <div className="hidden md:flex space-x-8">
