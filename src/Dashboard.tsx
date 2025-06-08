@@ -10,7 +10,8 @@ const Dashboard = () => {
     domain: '',
     apiToken: '',
     email: '',
-    isConnected: false
+    isConnected: false,
+    projectKey: ''
   });
   const [userData, setUserData] = useState();
   const [subscriptionData, setSubscriptionData] = useState({
@@ -151,6 +152,18 @@ const Dashboard = () => {
                 placeholder="your-domain.atlassian.net"
                 value={jiraConfig.domain}
                 onChange={(e) => setJiraConfig({...jiraConfig, domain: e.target.value})}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
+              />
+            </div>
+
+            {/* // project key */}
+            <div>
+              <label className="block text-gray-700 mb-2">Project Key</label>
+              <input
+                type="text"
+                placeholder="Your Jira Project Key"
+                value={jiraConfig.projectKey}
+                onChange={(e) => setJiraConfig({...jiraConfig, projectKey: e.target.value})}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
               />
             </div>
