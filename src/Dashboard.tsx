@@ -156,7 +156,6 @@ const Dashboard = () => {
               />
             </div>
 
-            {/* // project key */}
             <div>
               <label className="block text-gray-700 mb-2">Project Key</label>
               <input
