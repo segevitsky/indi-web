@@ -46,16 +46,14 @@ const DynamicDomainsForm = () => {
   }, []);
 
   // Validate domain
-  const validateDomain = (domain: string) => {
-    try {
-      if (!domain) return false;
-      
-      const urlPattern = /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?$/;
-      return urlPattern.test(domain);
-    } catch (e) {
-      return false;
-    }
-  };
+const validateDomain = (domain: string) => {
+  try {
+    const url = new URL(domain);
+    return Boolean(url.hostname);
+  } catch (e) {
+    return false;
+  }
+};
 
   // Add new domain field
   const addDomain = () => {
