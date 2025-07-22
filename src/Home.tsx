@@ -5,6 +5,7 @@ import FloatingIndicators from './Floatingindicators'
 import Navbar from './Navbar'
 import Pricing from './Pricing'
 import { useEffect } from 'react'
+import Footer from './Footer'
 
 export default function Home() {
 const navigate = useNavigate();
@@ -48,6 +49,7 @@ useEffect(() => {
         <About />
       <Pricing />
       <ContactUs />
+      <Footer />
     </>
   )
 }
