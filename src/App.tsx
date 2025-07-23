@@ -5,6 +5,7 @@ import LoginPage from './Login';
 import ProtectedRoute from './protectedRoute';
 import RegisterForm from './Register';
 import PrivacyPolicy from './Policy';
+import TermsOfService from './TermsOfService';
 
 
 
@@ -16,6 +17,7 @@ const App = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route
           path="/dashboard"
           element={
