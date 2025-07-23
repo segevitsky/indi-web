@@ -8,7 +8,7 @@ const navigate = useNavigate();
     <div className="container mx-auto px-6 py-4 flex items-center justify-between">
       <div className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">
       <img src={vitelogo} alt="Vite Logo" className="inline-block h-8 w-8 mr-2" />
-        indi mapper
+        Indi Mapper
       </div>
       <div className="hidden md:flex space-x-8">
         <a href="#home" className="text-gray-600 hover:text-gray-900">Home</a>
