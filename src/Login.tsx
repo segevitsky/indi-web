@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   signInWithEmailAndPassword, 
-  signInWithPopup, 
-  GoogleAuthProvider,
+  // signInWithPopup, 
+  // GoogleAuthProvider,
   createUserWithEmailAndPassword
 } from 'firebase/auth';
 import { auth } from './firebase/config';
-import { Mail, Lock, Anvil } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 
 const LoginPage = () => {
     // get state from navigate
@@ -44,15 +44,15 @@ const LoginPage = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
+  // const handleGoogleSignIn = async () => {
+  //   try {
+  //     const provider = new GoogleAuthProvider();
+  //     await signInWithPopup(auth, provider);
+  //     navigate('/dashboard');
+  //   } catch (err: any) {
+  //     setError(err.message);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-pink-50 to-rose-50">
