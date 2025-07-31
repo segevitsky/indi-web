@@ -106,22 +106,22 @@ const LoginPage = () => {
           </button>
         </form>
 
-        <div className="relative my-8">
+        {/* <div className="relative my-8">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-200"></div>
           </div>
           <div className="relative flex justify-center text-sm">
             <span className="px-4 bg-white text-gray-500">Or continue with</span>
           </div>
-        </div>
+        </div> */}
 
-        <button
+        {/* <button
           onClick={handleGoogleSignIn}
           className="w-full py-3 px-4 flex items-center justify-center space-x-2 border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <Anvil className="w-5 h-5" />
           <span>Sign in with Google</span>
-        </button>
+        </button> */}
 
         <p className="mt-6 text-center text-gray-600">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
