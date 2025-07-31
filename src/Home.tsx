@@ -6,7 +6,7 @@ import Navbar from './Navbar'
 import Pricing from './Pricing'
 import { useEffect } from 'react'
 import Footer from './Footer'
-import IndieMapperMarketingPopup from './Banner'
+// import IndieMapperMarketingPopup from './Banner'
 
 export default function Home() {
 const navigate = useNavigate();
@@ -24,7 +24,7 @@ useEffect(() => {
 
   return (
     <>
-    <IndieMapperMarketingPopup />
+    {/* <IndieMapperMarketingPopup /> */}
     <Navbar />
     <section id="home" className="min-h-screen flex items-center justify-center relative bg-gradient-to-r from-pink-50 to-rose-50">
     <FloatingIndicators />
