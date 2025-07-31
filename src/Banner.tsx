@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Zap, Shield, BarChart3, Users, ArrowRight, Sparkles } from 'lucide-react';
 
 const IndieMapperMarketingPopup = () => {
