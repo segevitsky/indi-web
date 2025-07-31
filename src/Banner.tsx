@@ -6,6 +6,7 @@ const IndieMapperMarketingPopup = () => {
   const [isClosing, setIsClosing] = useState(false);
   const [email, setEmail] = useState('');
   const [currentFeature, setCurrentFeature] = useState(0);
+  const [submitStatus, setSubmitStatus] = useState(''); // 'success', 'error', 'loading'
 
   const features = [
     { icon: <Zap className="w-6 h-6" />, text: "Real-time API mapping" },
@@ -36,18 +37,48 @@ const IndieMapperMarketingPopup = () => {
     }, 300);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!email || !email.includes('@')) {
-      alert('Please enter a valid email');
+      setSubmitStatus('error');
       return;
     }
-    // Here you would typically send the email to your backend
-    console.log('Email submitted:', email);
-    alert('🎉 Welcome Pioneer! You\'re now guaranteed lifetime free access. Check your email for next steps!');
-    handleClose();
+
+    setSubmitStatus('loading');
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          access_key: 'acc914d7-9d0a-43b0-9bc5-e9ea0bf8e1ba',
+          email: email,
+          message: `🚀 New IndieMapper Pioneer Registration!
+          
+          Email: ${email}
+          Time: ${new Date().toLocaleString()}
+          Source: Marketing Popup
+          Status: Lifetime Free Access Granted`,
+                    from_name: 'IndieMapper Website',
+                    subject: '🚀 New Pioneer Registration'
+                  })
+      });
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setTimeout(() => handleClose(), 3000); // Close after 3 seconds
+      } else {
+        throw new Error('Failed to send');
+      }
+      
+    } catch (error) {
+      console.error('Error:', error);
+      setSubmitStatus('error');
+    }
   };
 
-  const handleKeyPress = (e: any) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSubmit();
     }
@@ -127,23 +158,63 @@ const IndieMapperMarketingPopup = () => {
 
           {/* Email input */}
           <div className="space-y-4">
+            {/* Status Messages */}
+            {submitStatus === 'success' && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                  <span className="font-medium">🎉 Welcome Pioneer!</span>
+                </div>
+                <p className="text-sm mt-1">You're now guaranteed lifetime free access. Check your email!</p>
+              </div>
+            )}
+
+            {submitStatus === 'error' && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+                  <span className="font-medium">Please enter a valid email address</span>
+                </div>
+              </div>
+            )}
+
             <div>
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (submitStatus === 'error') setSubmitStatus(''); // Clear error when typing
+                }}
                 onKeyPress={handleKeyPress}
                 placeholder="Enter your email"
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
+                disabled={submitStatus === 'loading' || submitStatus === 'success'}
               />
             </div>
             
             <button
               onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 px-6 rounded-lg font-semibold hover:opacity-90 transform hover:scale-105 transition-all duration-200 flex items-center justify-center group"
+              disabled={submitStatus === 'loading' || submitStatus === 'success'}
+              className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center group ${
+                submitStatus === 'loading' 
+                  ? 'bg-gray-400 text-white cursor-not-allowed'
+                  : submitStatus === 'success'
+                  ? 'bg-green-500 text-white cursor-not-allowed'
+                  : 'bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:opacity-90 transform hover:scale-105'
+              }`}
             >
-              <span>Join Early Pioneers - FREE Forever!</span>
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              {submitStatus === 'loading' && (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              )}
+              <span>
+                {submitStatus === 'loading' ? 'Joining...' : 
+                 submitStatus === 'success' ? 'Welcome Aboard!' : 
+                 'Join Early Pioneers - FREE Forever!'}
+              </span>
+              {submitStatus === '' && (
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              )}
             </button>
             
             <p className="text-xs text-gray-500 text-center">
