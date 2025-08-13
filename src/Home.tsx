@@ -31,10 +31,10 @@ useEffect(() => {
     <div className="absolute inset-0 bg-gradient-to-r from-[#ff8177] to-[#b12a5b] opacity-5"></div>
     <div className="container mx-auto px-6 text-center relative z-10">
       <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">
-        Map Your APIs
+        Indi Mapper
       </h1>
       <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-        Visualize, monitor, and optimize your API integrations with our powerful mapping tool.
+        The only platform that connects your UI to your APIs with live monitoring, regression detection, and automated workflows
       </p>
       <div className="flex justify-center space-x-4">
         <button onClick={() => navigate('/login', { state: { register: true } })} className="px-8 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:opacity-90">
