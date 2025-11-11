@@ -1,6 +1,7 @@
+
 const FloatingIndicators = () => {
     // יצירת מערך של אינדיקטורים עם מיקום ומהירות רנדומליים
-    const indicators = Array.from({ length: 55 }, (_, i) => ({
+    const indicators = Array.from({ length: 15 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
