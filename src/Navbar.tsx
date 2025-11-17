@@ -1,40 +1,72 @@
+import { useEffect, useState } from "react";
 import IndiBlobLogo from "./IndiBlobLogo";
 
 export default function Navbar() {
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Check if dark mode is already set in localStorage
+    const savedMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(savedMode);
+    if (savedMode) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem('darkMode', String(newMode));
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
   return (
-    <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-indi-purple-100">
+    <nav className="fixed top-0 w-full bg-white/95 dark:bg-black/95 backdrop-blur-md z-[100] border-b border-gray-200 dark:border-gray-800">
     <div className="container mx-auto px-6 py-4 flex items-center justify-between">
       {/* Logo */}
       <div className="flex items-center gap-2 sm:gap-3 group cursor-pointer">
         <div className="w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center hover:scale-110 transition-transform duration-300">
           <IndiBlobLogo size={40} />
         </div>
-        <span className="font-headline font-bold text-lg sm:text-xl md:text-2xl bg-gradient-to-r from-indi-pink-500 via-indi-purple-500 to-indi-purple-600 bg-clip-text text-transparent">
+        <span className="font-headline font-bold text-lg sm:text-xl md:text-2xl text-black dark:text-white">
           Indi Mapper
         </span>
       </div>
 
       {/* Navigation Links */}
       <div className="hidden md:flex space-x-4 lg:space-x-8">
-        <a href="#home" className="font-sans font-medium text-sm lg:text-base text-gray-700 hover:text-indi-purple-600 transition-colors duration-200 hover:scale-105 transform">
+        <a href="#home" className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
           Home
         </a>
-        <a href="#about" className="font-sans font-medium text-sm lg:text-base text-gray-700 hover:text-indi-purple-600 transition-colors duration-200 hover:scale-105 transform">
+        <a href="#about" className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
           About
         </a>
-        <a href="#download" className="font-sans font-medium text-sm lg:text-base text-gray-700 hover:text-indi-purple-600 transition-colors duration-200 hover:scale-105 transform">
+        <a href="#download" className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
           Download
         </a>
-        <a href="#contact" className="font-sans font-medium text-sm lg:text-base text-gray-700 hover:text-indi-purple-600 transition-colors duration-200 hover:scale-105 transform">
+        <a href="#contact" className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
           Contact
         </a>
       </div>
 
-      {/* Action Button */}
+      {/* Action Buttons */}
       <div className="flex items-center gap-3">
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={toggleDarkMode}
+          className="p-2 sm:p-3 rounded-full shadow-lg transition-all hover:scale-110 bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-700"
+          aria-label="Toggle dark mode"
+        >
+          <span className="text-lg sm:text-2xl">{darkMode ? '☀️' : '🌙'}</span>
+        </button>
+
         <a
           href="#download"
-          className="px-4 sm:px-6 py-2 sm:py-2.5 font-sans font-semibold text-sm sm:text-base bg-gradient-to-r from-indi-pink-500 via-indi-purple-500 to-indi-purple-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transform transition-all duration-300 border-2 border-white"
+          className="px-4 sm:px-6 py-2 sm:py-2.5 font-sans font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl hover:scale-105 transform transition-all duration-300 border-2 border-white opacity-90 hover:opacity-100 dark:text-white"
         >
           Download Free
         </a>

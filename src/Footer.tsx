@@ -1,11 +1,25 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import IndiBlobLogo from './IndiBlobLogo';
 
 const Footer = () => {
   const navigate = useNavigate();
+  const [darkMode, setDarkMode] = useState(false);
+
+  console.log({ darkMode });
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setDarkMode(isDark);
+    };
+    checkDarkMode();
+    const interval = setInterval(checkDarkMode, 100);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <footer className="bg-gradient-to-br from-indi-purple-50/50 via-white to-indi-pink-50/50 border-t border-indi-purple-100 py-12 md:py-16 mt-16">
+    <footer className="bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 py-12 md:py-16 mt-16">
       <div className="container mx-auto px-4 sm:px-6">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
@@ -15,11 +29,11 @@ const Footer = () => {
               <div className="w-12 h-12 flex items-center justify-center hover:scale-110 transition-transform duration-300">
                 <IndiBlobLogo size={48} />
               </div>
-              <h3 className="font-headline font-bold text-xl sm:text-2xl bg-gradient-to-r from-indi-pink-500 via-indi-purple-500 to-indi-purple-600 bg-clip-text text-transparent">
+              <h3 className="font-headline font-bold text-xl sm:text-2xl text-black dark:text-white">
                 Indi Mapper
               </h3>
             </div>
-            <p className="font-sans text-sm sm:text-base text-gray-600 max-w-md leading-relaxed">
+            <p className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-md leading-relaxed">
               Visualize, monitor, and optimize your API integrations with our powerful mapping tool.
               Make your development workflow smarter and more efficient.
             </p>
@@ -27,27 +41,27 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-sans font-semibold text-gray-900 mb-4">Product</h4>
+            <h4 className="font-sans font-semibold text-black dark:text-white mb-4">Product</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#home" className="font-sans text-sm sm:text-base text-gray-600 hover:text-indi-purple-600 transition-colors">
+                <a href="#home" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                   Home
                 </a>
               </li>
               <li>
-                <a href="#about" className="font-sans text-sm sm:text-base text-gray-600 hover:text-indi-purple-600 transition-colors">
+                <a href="#about" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                   About
                 </a>
               </li>
               <li>
-                <a href="#download" className="font-sans text-sm sm:text-base text-gray-600 hover:text-indi-purple-600 transition-colors">
+                <a href="#download" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                   Download
                 </a>
               </li>
               <li>
                 <a
                   href="#download"
-                  className="font-sans text-sm sm:text-base text-gray-600 hover:text-indi-purple-600 transition-colors"
+                  className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                 >
                   Get Started
                 </a>
@@ -57,25 +71,25 @@ const Footer = () => {
 
           {/* Support */}
           <div>
-            <h4 className="font-sans font-semibold text-gray-900 mb-4">Support</h4>
+            <h4 className="font-sans font-semibold text-black dark:text-white mb-4">Support</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#contact" className="font-sans text-sm sm:text-base text-gray-600 hover:text-indi-purple-600 transition-colors">
+                <a href="#contact" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                   Contact Us
                 </a>
               </li>
               <li>
-                <a href="/help" className="font-sans text-sm sm:text-base text-gray-600 hover:text-indi-purple-600 transition-colors">
+                <a href="/help" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                   Help Center
                 </a>
               </li>
               <li>
-                <a href="/docs" className="font-sans text-sm sm:text-base text-gray-600 hover:text-indi-purple-600 transition-colors">
+                <a href="/docs" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                   Documentation
                 </a>
               </li>
               <li>
-                <a href="mailto:support@indimapper.com" className="font-sans text-sm sm:text-base text-gray-600 hover:text-indi-purple-600 transition-colors">
+                <a href="mailto:support@indimapper.com" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                   Email Support
                 </a>
               </li>
@@ -84,11 +98,11 @@ const Footer = () => {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-indi-purple-100 pt-8">
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
           {/* Bottom Section */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             {/* Copyright */}
-            <div className="font-sans text-gray-600 text-xs sm:text-sm text-center md:text-left">
+            <div className="font-sans text-gray-500 dark:text-gray-500 text-xs sm:text-sm text-center md:text-left">
               © {new Date().getFullYear()} Indi Mapper. All rights reserved.
             </div>
 
@@ -96,19 +110,19 @@ const Footer = () => {
             <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm">
               <button
                 onClick={() => navigate('/privacy-policy')}
-                className="font-sans text-gray-600 hover:text-indi-purple-600 transition-colors"
+                className="font-sans text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
               >
                 Privacy Policy
               </button>
-              <span className="text-gray-300">•</span>
+              <span className="text-gray-300 dark:text-gray-700">•</span>
               <button
                 onClick={() => navigate('/terms')}
-                className="font-sans text-gray-600 hover:text-indi-purple-600 transition-colors"
+                className="font-sans text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
               >
                 Terms of Service
               </button>
-              <span className="text-gray-300">•</span>
-              <a href="#contact" className="font-sans text-gray-600 hover:text-indi-purple-600 transition-colors">
+              <span className="text-gray-300 dark:text-gray-700">•</span>
+              <a href="#contact" className="font-sans text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                 Contact
               </a>
             </div>
