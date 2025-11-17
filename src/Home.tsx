@@ -196,7 +196,7 @@ export default function Home() {
           onClick={() => setInScrollMode(true)}
           className={`fixed bottom-6 right-6 z-50 px-6 py-3 rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-sm flex items-center gap-2 ${darkMode ? 'bg-white text-black hover:bg-gray-100' : 'bg-black text-white hover:bg-gray-900'} border-2 ${darkMode ? 'border-white' : 'border-black'}`}
         >
-          Skip to Website →
+          Skip →
         </button>
       )}
 
@@ -206,7 +206,7 @@ export default function Home() {
           onClick={backToSlides}
           className={`fixed bottom-6 right-6 z-50 px-6 py-3 rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-sm flex items-center gap-2 ${darkMode ? 'bg-white text-black hover:bg-gray-100' : 'bg-black text-white hover:bg-gray-900'} border-2 ${darkMode ? 'border-white' : 'border-black'}`}
         >
-          ↑ Back to Slides
+          ↑ Slides
         </button>
       )}
 
@@ -222,7 +222,7 @@ export default function Home() {
           <button
             onClick={prevSlide}
             disabled={isTransitioning}
-            className={`hidden md:flex fixed left-2 sm:left-6 top-1/2 -translate-y-1/2 z-40 p-2 sm:p-4 rounded-full ${darkMode ? 'bg-gray-800 text-white border-purple-500' : 'bg-white text-gray-900 border-purple-600'} shadow-2xl hover:scale-110 transition-all disabled:opacity-50 border-2 text-lg sm:text-2xl font-bold items-center justify-center`}
+            className={`md:flex fixed left-2 sm:left-6 top-1/2 -translate-y-1/2 z-40 p-2 sm:p-4 rounded-full ${darkMode ? 'bg-gray-800 text-white border-purple-500' : 'bg-white text-gray-900 border-purple-600'} shadow-2xl hover:scale-110 transition-all disabled:opacity-50 border-2 text-lg sm:text-2xl font-bold items-center justify-center`}
           >
             ←
           </button>
@@ -231,7 +231,7 @@ export default function Home() {
           <button
             onClick={nextSlide}
             disabled={isTransitioning}
-            className={`hidden md:flex fixed right-2 sm:right-6 top-1/2 -translate-y-1/2 z-40 p-2 sm:p-4 rounded-full ${darkMode ? 'bg-gray-800 text-white border-purple-500' : 'bg-white text-gray-900 border-purple-600'} shadow-2xl hover:scale-110 transition-all disabled:opacity-50 border-2 text-lg sm:text-2xl font-bold items-center justify-center`}
+            className={`md:flex fixed right-2 sm:right-6 top-1/2 -translate-y-1/2 z-40 p-2 sm:p-4 rounded-full ${darkMode ? 'bg-gray-800 text-white border-purple-500' : 'bg-white text-gray-900 border-purple-600'} shadow-2xl hover:scale-110 transition-all disabled:opacity-50 border-2 text-lg sm:text-2xl font-bold items-center justify-center`}
           >
             →
           </button>
@@ -446,7 +446,7 @@ export default function Home() {
             className={`absolute inset-0 flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-white'}`}
             style={getSlideTransform(4)}
           >
-            <div className="relative z-10 text-center max-w-3xl px-4 sm:px-8">
+            <div className="mt-[8rem] relative z-10 text-center max-w-3xl px-4 sm:px-8">
               <div className={slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}>
                 <Blobi emotion="happy" size={60} className="mx-auto mb-3 sm:mb-6" />
               </div>
