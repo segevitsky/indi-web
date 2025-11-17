@@ -44,6 +44,8 @@ export default function Home() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [slideEntered, setSlideEntered] = useState(false);
   const [inScrollMode, setInScrollMode] = useState(false);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
   const totalSlides = 5;
   const scrollSectionRef = useRef<HTMLDivElement>(null);
 
@@ -121,6 +123,33 @@ export default function Home() {
     };
   }, [currentSlide, isTransitioning, inScrollMode]);
 
+  // Handle touch events for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientY);
+    setTouchEnd(e.targetTouches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientY);
+  };
+
+  const handleTouchEnd = () => {
+    if (isTransitioning) return;
+
+    const minSwipeDistance = 50;
+    const distance = touchStart - touchEnd;
+    const isSwipeDown = distance > minSwipeDistance;
+    const isSwipeUp = distance < -minSwipeDistance;
+
+    if (isSwipeDown && currentSlide < totalSlides - 1) {
+      nextSlide();
+    } else if (isSwipeDown && currentSlide === totalSlides - 1) {
+      enterScrollMode();
+    } else if (isSwipeUp && currentSlide > 0) {
+      prevSlide();
+    }
+  };
+
   const nextSlide = () => {
     setIsTransitioning(true);
     setCurrentSlide(prev => Math.min(prev + 1, totalSlides - 1));
@@ -182,7 +211,12 @@ export default function Home() {
       )}
 
       {/* Slide Presentation Container */}
-      <div className={`${inScrollMode ? 'hidden' : 'block'} overflow-x-hidden`}>
+      <div
+        className={`${inScrollMode ? 'hidden' : 'block'} overflow-x-hidden`}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* Navigation Arrows - Hidden on mobile */}
         {currentSlide > 0 && (
           <button
