@@ -19,7 +19,7 @@ export default function About() {
       title: 'Effortless API Visualization',
       description: 'Transform your debugging experience with instant visual indicators that link UI elements to their API calls. No more digging through network logs - see exactly where and how your APIs interact with your interface',
       icon: Eye,
-      gradient: 'from-white to-black'
+      gradient: 'from-pink to-pink'
     },
     {
       title: 'Smart Real-time Monitoring',
@@ -63,7 +63,7 @@ export default function About() {
               className="group p-6 sm:p-8 rounded-3xl bg-gray-50 dark:bg-gray-900 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 transform border-2 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
             >
               {/* Icon */}
-              <div className={`w-14 h-14 sm:w-16 sm:h-16 mb-4 sm:mb-6 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 opacity-90`}>
+              <div className={`w-14 h-14 sm:w-16 sm:h-16 mb-4 sm:mb-6 rounded-2xl bg-pink-300 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 opacity-90`}>
                 <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
               </div>
 

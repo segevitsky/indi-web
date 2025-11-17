@@ -188,7 +188,7 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen w-full relative overflow-x-hidden ${darkMode ? 'bg-gray-900' : 'bg-white'} ${inScrollMode ? 'overflow-y-auto' : 'overflow-y-hidden'}`}>
-      <Navbar />
+      {inScrollMode && <Navbar />}
 
       {/* Skip to Website Button (shown during slides) */}
       {!inScrollMode && (
@@ -262,15 +262,15 @@ export default function Home() {
             style={getSlideTransform(0)}
           >
             <div className="relative z-10 text-center max-w-4xl px-4 sm:px-8">
+              <h1 className={`text-lg sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
+                Hey! 👋 Welcome to Indi Mapper! 
+              </h1>
               <div className={slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}>
                 <Blobi emotion="happy" size={60} className="mx-auto mb-3 sm:mb-6" />
               </div>
 
               <h1 className={`text-lg sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
-                Welcome to Indi Mapper! 
-              </h1>
-              <h1 className={`text-lg sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
-                Hey! 👋 I'm Blobi
+                I'm Blobi
               </h1>
 
               <p className={`text-sm sm:text-lg lg:text-xl font-bold mb-4 sm:mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-2xl mx-auto ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
