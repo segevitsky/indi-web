@@ -130,6 +130,8 @@ export default function Home() {
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    // Prevent default scroll behavior on mobile
+    e.preventDefault();
     setTouchEnd(e.targetTouches[0].clientY);
   };
 
@@ -188,7 +190,7 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen w-full relative overflow-x-hidden ${darkMode ? 'bg-gray-900' : 'bg-white'} ${inScrollMode ? 'overflow-y-auto' : 'overflow-y-hidden'}`}>
-      {inScrollMode && <Navbar />}
+      <Navbar inScrollMode={inScrollMode} setInScrollMode={setInScrollMode} />
 
       {/* Skip to Website Button (shown during slides) */}
       {!inScrollMode && (
@@ -212,10 +214,11 @@ export default function Home() {
 
       {/* Slide Presentation Container */}
       <div
-        className={`${inScrollMode ? 'hidden' : 'block'} overflow-x-hidden`}
+        className={`${inScrollMode ? 'hidden' : 'block'} overflow-hidden touch-none`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        style={{ touchAction: 'none' }}
       >
         {/* Navigation Arrows - Hidden on mobile */}
         {currentSlide > 0 && (
@@ -255,15 +258,19 @@ export default function Home() {
         </div>
 
         {/* Slides Container */}
-        <div className="h-screen w-screen relative">
+        <div className="h-screen w-full relative overflow-hidden">
           {/* Slide 0: Hero */}
           <div
             className={`absolute inset-0 flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-white'}`}
             style={getSlideTransform(0)}
           >
             <div className="relative z-10 text-center max-w-4xl px-4 sm:px-8">
-              <h1 className={`text-lg sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
-                Hey! 👋 Welcome to Indi Mapper! 
+              <h1 className={`text-3xl sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
+                Hey👋 Welcome to Indi Mapper
+              </h1>
+              
+              <h1 className={`text-lg sm:text-2xl lg:text-3xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-purple-500'} ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
+                The Best Chrome Extension Ever!
               </h1>
               <div className={slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}>
                 <Blobi emotion="happy" size={60} className="mx-auto mb-3 sm:mb-6" />
@@ -273,16 +280,12 @@ export default function Home() {
                 I'm Blobi
               </h1>
 
-              <p className={`text-sm sm:text-lg lg:text-xl font-bold mb-4 sm:mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-2xl mx-auto ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
-                Your new API debugging buddy.<br className="hidden sm:inline" /> I make API calls visible for everyone on your team!
+              <p className={`text-md sm:text-lg lg:text-xl font-bold mb-4 sm:mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-2xl mx-auto ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
+                Your new API debugging buddy.<br className="hidden sm:inline" /> Let me show you around!
               </p>
 
               <div className={slideEntered && currentSlide === 0 ? 'animate-fade-in mb-4 sm:mb-6' : 'opacity-0 mb-4 sm:mb-6'}>
               </div>
-
-              <p className={`text-xs sm:text-sm font-semibold ${darkMode ? 'text-gray-500' : 'text-gray-500'} ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
-                Let me show you around ↓
-              </p>
             </div>
           </div>
 
@@ -292,7 +295,7 @@ export default function Home() {
             style={getSlideTransform(1)}
           >
             <div className="relative z-10 w-full max-w-7xl px-4 sm:px-8">
-              <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-12">
+              <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-12 mt-[4rem]">
                 <div className="flex-1 max-w-xl text-center lg:text-left">
                   <div className={`flex sm:flex-row items-center justify-center lg:justify-start gap-4 sm:gap-6 mb-4 sm:mb-8 ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
                     <Blobi emotion="calm" size={60} />
@@ -300,7 +303,7 @@ export default function Home() {
                       <div className={`relative p-3 sm:p-6 rounded-2xl ${darkMode ? 'bg-gray-900 text-white border-2 sm:border-4 border-purple-500/50' : 'bg-white text-black border-2 sm:border-4 border-gray-300'} font-black text-sm sm:text-xl max-w-xs sm:max-w-md shadow-2xl`}>
                         <div className="flex items-center gap-2 mb-1 sm:mb-2">
                           <span className="text-xl sm:text-2xl">👀</span>
-                          <span className={`text-xs sm:text-base ${darkMode ? 'text-gray-400' : 'text-gray-600'} uppercase tracking-wide`}>Look Here!</span>
+                          <span className={`text-xs sm:text-base ${darkMode ? 'text-gray-400' : 'text-gray-600'} uppercase tracking-wide`}>Yo Looki Here!</span>
                         </div>
                         "See those dots?"
                         <div className="hidden lg:block absolute -right-8 top-1/2 -translate-y-1/2 text-4xl">
@@ -310,16 +313,16 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <h2 className={`text-xl sm:text-2xl lg:text-4xl font-black mb-3 sm:mb-4 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
+                  <h2 className={`text-2xl sm:text-2xl lg:text-4xl font-black mb-3 sm:mb-4 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
                     Those Are My "Indi's" ✨
                   </h2>
 
-                  <p className={`text-sm sm:text-base lg:text-lg font-bold mb-4 sm:mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'} ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
+                  <p className={`text-lg sm:text-base lg:text-lg font-bold mb-4 sm:mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'} ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
                     Each glowing dot = one API call firing in real-time! 🎯
                   </p>
 
                   <div className={`p-3 sm:p-4 rounded-2xl ${darkMode ? 'bg-gray-900 border-2 border-gray-800' : 'bg-white border-2 border-gray-200'} mb-4 sm:mb-6 ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
-                    <p className={`text-xs sm:text-sm lg:text-base font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <p className={`text-sm sm:text-sm lg:text-base font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       ✅ QA sees when APIs fire<br />
                       ✅ Everyone understands<br />
                       ✅ All on the same page!
@@ -363,24 +366,24 @@ export default function Home() {
 
           {/* Slide 2: Protection */}
           <div
-            className={`absolute inset-0 flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-white'}`}
+            className={`absolute inset-0 flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-white'} overflow-y-auto`}
             style={getSlideTransform(2)}
           >
-            <div className="relative z-10 w-full max-w-6xl px-4 sm:px-8 py-8">
-              <div className="text-center mb-4 sm:mb-6">
-                <h2 className={`text-lg sm:text-2xl lg:text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 2 ? 'animate-fade-in' : 'opacity-0'}`}>
-                  I Don't Just Watch... I PROTECT! 🛡️
+            <div className="relative z-10 w-full max-w-6xl px-4 sm:px-8 py-4 sm:py-8">
+              <div className="text-center mb-2 sm:mb-4">
+                <h2 className={` mt-8 text-m sm:text-xl lg:text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 2 ? 'animate-fade-in' : 'opacity-0'}`}>
+                  But... I Don't Just Watch I'll give u a heads up!
                 </h2>
-                <div className={`flex flex-col items-center justify-center gap-2 mb-3 sm:mb-4 ${slideEntered && currentSlide === 2 ? 'animate-fade-in' : 'opacity-0'}`}>
-                  <Blobi emotion="worried" size={60} />
+                <div className={`flex flex-col items-center justify-center gap-1 sm:gap-2 mb-2 sm:mb-3 ${slideEntered && currentSlide === 2 ? 'animate-fade-in' : 'opacity-0'}`}>
+                  <Blobi emotion="worried" size={50} />
                   <div className={`p-2 sm:p-4 rounded-2xl max-w-[200px] sm:max-w-md ${darkMode ? 'bg-gray-900 text-white border-2 border-purple-500/50' : 'bg-white text-black border-2 border-gray-300'} font-bold text-sm sm:text-base shadow-xl`}>
-                    "I protect YOU!"
+                    "Hey,Check this out! ⚠️"
                   </div>
                 </div>
 
               </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-4 sm:mb-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-5 mb-3 sm:mb-6">
                 {[
                   { emoji: '🌐', title: 'Slow APIs', desc: '> 1s' },
                   { emoji: '💥', title: 'Failed', desc: '404s, 500s' },
@@ -389,51 +392,66 @@ export default function Home() {
                 ].map((item) => (
                   <div key={item.title} className={`p-3 sm:p-5 rounded-2xl ${darkMode ? 'bg-gray-900 border-2 border-gray-800' : 'bg-gray-50 border-2 border-gray-200'} shadow-xl transition-all ${slideEntered && currentSlide === 2 ? 'animate-fade-in' : 'opacity-0'}`}>
                     <div className="text-3xl sm:text-4xl mb-2 sm:mb-3 opacity-80">{item.emoji}</div>
-                    <div className={`font-black text-xs sm:text-base mb-1 ${darkMode ? 'text-white' : 'text-black'}`}>{item.title}</div>
-                    <div className={`text-[10px] sm:text-xs font-bold ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>{item.desc}</div>
+                    <div className={`font-black text-sm sm:text-base mb-1 ${darkMode ? 'text-white' : 'text-black'}`}>{item.title}</div>
+                    <div className={`text-xs sm:text-xs font-bold ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>{item.desc}</div>
                   </div>
                 ))}
               </div>
 
               <div className={`text-center ${slideEntered && currentSlide === 2 ? 'animate-fade-in' : 'opacity-0'}`}>
-                <p className={`text-xs sm:text-sm lg:text-base font-bold italic mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`text-base sm:text-sm lg:text-base font-bold italic mb-4 sm:mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   Integrations coming soon! 🔥
                 </p>
+
+                {/* Teaser for Indi Flows */}
+                <div className="mt-6 sm:mt-8 mb-4">
+                  <div className="inline-block px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 opacity-90 mb-3 sm:mb-4">
+                    <p className="text-white text-xs sm:text-sm font-black tracking-wide">✨ BUT WAIT...</p>
+                  </div>
+                  <h1 className={`text-xl sm:text-2xl lg:text-4xl font-black ${darkMode ? 'text-white' : 'text-black'} mb-2`}>
+                    Leaving the Best For Last 🎁
+                  </h1>
+                  <p className={`text-base sm:text-lg font-bold ${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-md mx-auto`}>
+                    Swipe to see our secret weapon →
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Slide 3: Indi Flows */}
           <div
-            className={`absolute inset-0 flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-gray-50'}`}
+            className={`absolute inset-0 flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-gray-50'} overflow-y-auto`}
             style={getSlideTransform(3)}
           >
-            <div className="relative z-10 max-w-4xl px-4 sm:px-8 text-center py-8">
-              <div className={`flex flex-col items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4 ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
-                <Blobi emotion="happy" size={60} />
+            <div className="relative z-10 max-w-4xl px-4 sm:px-8 text-center py-4 sm:py-8">
+              <div className={`flex flex-col items-center justify-center gap-1 sm:gap-2 mb-2 sm:mb-3 ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
+              <h2 className={`text-3xl sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-4 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
+                Meet Indi Flows 🎬
+              </h2>
                 <div className={`p-2 sm:p-4 rounded-2xl max-w-[200px] sm:max-w-xs ${darkMode ? 'bg-gray-900 text-white border-2 border-purple-500/50' : 'bg-white text-black border-2 border-gray-300'} font-bold text-sm sm:text-base shadow-xl`}>
                   "Check this! 🤯"
                 </div>
+                <Blobi emotion="happy" size={80} />
               </div>
 
-              <div className={`inline-block px-3 sm:px-4 py-1 sm:py-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs sm:text-sm font-black mb-3 sm:mb-4 opacity-90 ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
-                ⚡ EXPERIMENTAL
-              </div>
 
-              <h2 className={`text-lg sm:text-2xl lg:text-4xl font-black mb-3 sm:mb-4 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
-                Meet Indi Flows 🎬
-              </h2>
 
-              <div className={`max-w-2xl mx-auto p-4 sm:p-8 rounded-3xl ${darkMode ? 'bg-gray-900 border-2 sm:border-4 border-gray-800' : 'bg-white border-2 sm:border-4 border-gray-200'} mb-4 sm:mb-6 shadow-xl ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
-                <p className={`text-sm sm:text-xl lg:text-2xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-black'}`}>
+
+              <div className={`max-w-2xl mx-auto p-3 sm:p-8 rounded-3xl ${darkMode ? 'bg-gray-900 border-2 sm:border-4 border-gray-800' : 'bg-white border-2 sm:border-4 border-gray-200'} mb-3 sm:mb-6 shadow-xl ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
+                <p className={`text-lg sm:text-xl lg:text-2xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-black'}`}>
                   Record Clicks. Auto-Replay. 🔄
                 </p>
-                <p className={`text-xs sm:text-sm lg:text-base font-bold mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Click → <span className="px-2 sm:px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded font-mono text-[10px] sm:text-sm opacity-90">REC</span> → Boom!
+                <p className={`text-sm sm:text-sm lg:text-base font-bold mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Click → <span className="px-2 sm:px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded font-mono text-xs sm:text-sm opacity-90">REC</span> → Boom!
                 </p>
-                <p className={`text-xs sm:text-sm font-semibold italic ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                  Catch bugs early. ☕
+                <p className={`text-sm sm:text-sm font-semibold italic ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                  Catch bugs early. ☕ Get Free Automation and Run Sanity Checks on your machine.
                 </p>
+              </div>
+
+                            <div className={`inline-block px-2 sm:px-4 py-1 sm:py-2 rounded-full ${darkMode ? 'text-white' : 'text-black'} text-xs sm:text-sm font-black mb-2 sm:mb-3 opacity-90 ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
+                ⚡ EXPERIMENTAL
               </div>
 
               <div className={slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}>
@@ -451,11 +469,11 @@ export default function Home() {
                 <Blobi emotion="happy" size={60} className="mx-auto mb-3 sm:mb-6" />
               </div>
 
-              <h2 className={`text-lg sm:text-2xl lg:text-4xl font-black mb-3 sm:mb-6 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}>
+              <h2 className={`text-3xl sm:text-2xl lg:text-4xl font-black mb-3 sm:mb-6 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}>
                 So... Ready to Start? 🚀
               </h2>
 
-              <p className={`text-sm sm:text-base lg:text-lg font-bold mb-4 sm:mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-xl mx-auto ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}>
+              <p className={`text-lg sm:text-base lg:text-lg font-bold mb-4 sm:mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-xl mx-auto ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}>
                 Join thousands of developers making API debugging fun!
               </p>
 
@@ -463,7 +481,7 @@ export default function Home() {
               </div>
 
               <div className={`space-y-2 sm:space-y-3 mb-4 sm:mb-6 ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}>
-                <p className={`text-xs sm:text-sm font-bold ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                <p className={`text-sm sm:text-sm font-bold ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                   🔒 Free Forever • ⚡ 30-Second Install • 🎯 Works on Any Site
                 </p>
               </div>
@@ -500,7 +518,7 @@ export default function Home() {
             </div>
 
             <p className={`font-sans text-base sm:text-lg md:text-xl lg:text-2xl ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed px-4`}>
-              The only platform that connects your UI to your APIs with live monitoring, regression detection, and automated workflows
+              The only chrome extension that connects your UI to your APIs with live monitoring, regression detection, and automated workflows
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 mb-12 sm:mb-16 px-4">

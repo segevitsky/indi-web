@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import IndiBlobLogo from "./IndiBlobLogo";
 
-export default function Navbar() {
+export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode: boolean; setInScrollMode: (value: boolean) => void }) {
   const [darkMode, setDarkMode] = useState(false);
+
+  console.log({ inScrollMode, setInScrollMode });
 
   useEffect(() => {
     // Check if dark mode is already set in localStorage
@@ -39,16 +41,16 @@ export default function Navbar() {
 
       {/* Navigation Links */}
       <div className="hidden md:flex space-x-4 lg:space-x-8">
-        <a href="#home" className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
+        <a href="#home" onClick={() => setInScrollMode(true)} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
           Home
         </a>
-        <a href="#about" className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
+        <a href="#about" onClick={() => setInScrollMode(true)} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
           About
         </a>
-        <a href="#download" className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
+        <a href="#download" onClick={() => setInScrollMode(true)} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
           Download
         </a>
-        <a href="#contact" className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
+        <a href="#contact" onClick={() => setInScrollMode(true)} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
           Contact
         </a>
       </div>
