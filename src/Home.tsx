@@ -190,7 +190,7 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen w-full relative overflow-x-hidden ${darkMode ? 'bg-gray-900' : 'bg-white'} ${inScrollMode ? 'overflow-y-auto' : 'overflow-y-hidden'}`}>
-      <Navbar inScrollMode={inScrollMode} setInScrollMode={setInScrollMode} />
+      {inScrollMode && <Navbar inScrollMode={inScrollMode} setInScrollMode={setInScrollMode} />}
 
       {/* Skip to Website Button (shown during slides) */}
       {!inScrollMode && (
