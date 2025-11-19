@@ -369,7 +369,7 @@ export default function Home() {
             className={`absolute inset-0 flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-white'} overflow-y-auto`}
             style={getSlideTransform(2)}
           >
-            <div className="relative z-10 w-full max-w-6xl px-4 sm:px-8 py-4 sm:py-8">
+            <div className="relative z-10 w-full max-w-6xl px-4 sm:px-8 py-4 sm:py-8 mb-[4rem]">
               <div className="text-center mb-2 sm:mb-4">
                 <h2 className={`text-base sm:text-xl lg:text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 2 ? 'animate-fade-in' : 'opacity-0'}`}>
                   But... I Don't Just Watch I'll give u a heads up!
