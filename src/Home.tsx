@@ -188,10 +188,10 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+
   return (
     <div className={`min-h-screen w-full relative overflow-x-hidden ${darkMode ? 'bg-gray-900' : 'bg-white'} ${inScrollMode ? 'overflow-y-auto' : 'overflow-y-hidden'}`}>
       {inScrollMode && <Navbar inScrollMode={inScrollMode} setInScrollMode={setInScrollMode} />}
-
       {/* Skip to Website Button (shown during slides) */}
       {!inScrollMode && (
         <button
@@ -317,9 +317,9 @@ export default function Home() {
                     Those Are My Indi's ✨
                   </h2>
 
-                  <p className={`text-base sm:text-base lg:text-lg font-bold mb-4 sm:mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'} ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
+                  {/* <p className={`text-base sm:text-base lg:text-lg font-bold mb-4 sm:mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'} ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
                     Each glowing dot = one API call firing in real-time! 🎯
-                  </p>
+                  </p> */}
 
                   <div className={`space-y-2 sm:space-y-3 ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
                     {[
@@ -394,15 +394,16 @@ export default function Home() {
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-5 mb-3 sm:mb-6">
                 {[
-                  { emoji: '🌐', title: 'Slow APIs', desc: '> 1s' },
-                  { emoji: '💥', title: 'Failed', desc: '404s, 500s' },
-                  { emoji: '🔄', title: 'Polling', desc: 'Repeated' },
-                  { emoji: '📊', title: 'Schemas', desc: 'Auto' },
+                  { emoji: '🌐', title: 'Slow APIs', desc: 'Taking too long', borderColor: 'border-yellow-500/60', indicatorColor: 'bg-yellow-500 shadow-yellow-500/50' },
+                  { emoji: '💥', title: 'Failed', desc: 'Errors detected', borderColor: 'border-red-500/60', indicatorColor: 'bg-red-500 shadow-red-500/50' },
+                  { emoji: '🔄', title: 'Polling', desc: 'Non-stop calls', borderColor: 'border-blue-500/60', indicatorColor: 'bg-blue-500 shadow-blue-500/50' },
+                  { emoji: '📊', title: 'Schemas', desc: 'Validating now', borderColor: 'border-purple-500/60', indicatorColor: 'bg-purple-500 shadow-purple-500/50' },
                 ].map((item) => (
-                  <div key={item.title} className={`p-3 sm:p-5 rounded-2xl ${darkMode ? 'bg-gray-900 border-2 border-gray-800' : 'bg-gray-50 border-2 border-gray-200'} shadow-xl transition-all ${slideEntered && currentSlide === 2 ? 'animate-fade-in' : 'opacity-0'}`}>
-                    <div className="text-3xl sm:text-4xl mb-2 sm:mb-3 opacity-80">{item.emoji}</div>
-                    <div className={`font-black text-xs sm:text-base mb-1 ${darkMode ? 'text-white' : 'text-black'}`}>{item.title}</div>
-                    <div className={`text-[10px] sm:text-xs font-bold ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>{item.desc}</div>
+                  <div key={item.title} className={`relative p-3 sm:p-4 rounded-xl ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} border-2 ${item.borderColor} shadow-xl transition-all hover:scale-105 ${slideEntered && currentSlide === 2 ? 'animate-fade-in' : 'opacity-0'}`}>
+                    <div className={`absolute top-2 right-2 w-2 h-2 sm:w-3 sm:h-3 rounded-full ${item.indicatorColor} animate-pulse shadow-lg`} />
+                    <div className="text-2xl sm:text-3xl mb-1 sm:mb-2">{item.emoji}</div>
+                    <div className={`font-black text-xs sm:text-sm mb-0.5 ${darkMode ? 'text-white' : 'text-black'}`}>{item.title}</div>
+                    <div className={`text-[10px] sm:text-xs font-bold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{item.desc}</div>
                   </div>
                 ))}
               </div>
