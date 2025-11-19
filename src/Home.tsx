@@ -196,7 +196,7 @@ export default function Home() {
       {!inScrollMode && (
         <button
           onClick={() => setInScrollMode(true)}
-          className={`fixed bottom-6 right-6 z-50 px-6 py-3 rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-sm flex items-center gap-2 ${darkMode ? 'bg-white text-black hover:bg-gray-100' : 'bg-black text-white hover:bg-gray-900'} border-2 ${darkMode ? 'border-white' : 'border-black'}`}
+          className={`opacity-40 fixed bottom-6 right-6 z-50 px-6 py-3 rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-sm flex items-center gap-2 ${darkMode ? 'bg-white text-black hover:bg-gray-100' : 'bg-black text-white hover:bg-gray-900'} border-2 ${darkMode ? 'border-white' : 'border-black'}`}
         >
           Skip →
         </button>
