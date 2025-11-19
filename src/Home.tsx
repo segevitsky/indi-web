@@ -302,10 +302,10 @@ export default function Home() {
                     <div className="relative">
                       <div className={`relative p-3 sm:p-6 rounded-2xl ${darkMode ? 'bg-gray-900 text-white border-2 sm:border-4 border-purple-500/50' : 'bg-white text-black border-2 sm:border-4 border-gray-300'} font-black text-sm sm:text-xl max-w-xs sm:max-w-md shadow-2xl`}>
                         <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                          <span className="text-xl sm:text-2xl">👀</span>
-                          <span className={`text-xs sm:text-base ${darkMode ? 'text-gray-400' : 'text-gray-600'} uppercase tracking-wide`}>Yo Looki Here!</span>
+                          {/* <span className="text-xl sm:text-2xl">👀</span> */}
+                          {/* <span className={`text-xs sm:text-base ${darkMode ? 'text-gray-400' : 'text-gray-600'} uppercase tracking-wide`}>Yo Looki Here!</span> */}
                         </div>
-                        "See those dots?"
+                        👀 "See those dots?"
                         <div className="hidden lg:block absolute -right-8 top-1/2 -translate-y-1/2 text-4xl">
                           👉
                         </div>
@@ -314,19 +314,28 @@ export default function Home() {
                   </div>
 
                   <h2 className={`text-xl sm:text-2xl lg:text-4xl font-black mb-3 sm:mb-4 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
-                    Those Are My "Indi's" ✨
+                    Those Are My Indi's ✨
                   </h2>
 
                   <p className={`text-base sm:text-base lg:text-lg font-bold mb-4 sm:mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'} ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
                     Each glowing dot = one API call firing in real-time! 🎯
                   </p>
 
-                  <div className={`p-3 sm:p-4 rounded-2xl ${darkMode ? 'bg-gray-900 border-2 border-gray-800' : 'bg-white border-2 border-gray-200'} mb-4 sm:mb-6 ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
-                    <p className={`text-xs sm:text-sm lg:text-base font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      ✅ QA sees when APIs fire<br />
-                      ✅ Everyone understands<br />
-                      ✅ All on the same page!
-                    </p>
+                  <div className={`space-y-2 sm:space-y-3 ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
+                    {[
+                      { text: 'Map every click to its API in real-time', color: 'bg-green-500 shadow-green-500/50' },
+                      { text: 'Auto-generate & validate schemas', color: 'bg-blue-500 shadow-blue-500/50' },
+                      { text: 'Catch regressions before production', color: 'bg-purple-500 shadow-purple-500/50' },
+                      { text: 'Debug with built-in modals & security insights', color: 'bg-pink-500 shadow-pink-500/50' },
+                      { text: 'Zero setup - works on any site', color: 'bg-yellow-500 shadow-yellow-500/50' }
+                    ].map((item, i) => (
+                      <div key={i} className={`flex items-center gap-3 p-2 sm:p-3 rounded-xl ${darkMode ? 'bg-gray-900/50 border border-gray-800' : 'bg-white/50 border border-gray-200'} backdrop-blur-sm`}>
+                        <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full ${item.color} animate-pulse shadow-lg flex-shrink-0`} />
+                        <p className={`text-xs sm:text-sm lg:text-base font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                          {item.text}
+                        </p>
+                      </div>
+                    ))}
                   </div>
 
                   <div className={slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}>
