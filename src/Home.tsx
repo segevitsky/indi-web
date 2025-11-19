@@ -295,7 +295,7 @@ export default function Home() {
             style={getSlideTransform(1)}
           >
             <div className="relative z-10 w-full max-w-7xl px-4 sm:px-8">
-              <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-12 mt-8">
+              <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-12 mb-[4rem]">
                 <div className="flex-1 max-w-xl text-center lg:text-left">
                   <div className={`flex sm:flex-row items-center justify-center lg:justify-start gap-4 sm:gap-6 mb-4 sm:mb-8 ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
                     <Blobi emotion="calm" size={60} />
