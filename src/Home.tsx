@@ -265,7 +265,7 @@ export default function Home() {
             style={getSlideTransform(0)}
           >
             <div className="relative z-10 text-center max-w-4xl px-4 sm:px-8">
-              <h1 className={`text-3xl sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
+              <h1 className={`text-4xl sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
                 Hey👋 Welcome to Indi Mapper
               </h1>
               
@@ -426,8 +426,8 @@ export default function Home() {
           >
             <div className="relative z-10 max-w-4xl px-4 sm:px-8 text-center py-4 sm:py-8">
               <div className={`flex flex-col items-center justify-center gap-1 sm:gap-2 mb-2 sm:mb-3 ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
-              <h2 className={`text-xl sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-4 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
-                Meet Indi Flows 🎬
+              <h2 className={`text-4xl sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-4 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
+                Introducting Indi Flows 🎬
               </h2>
                 <div className={`p-2 sm:p-4 rounded-2xl max-w-[180px] sm:max-w-xs ${darkMode ? 'bg-gray-900 text-white border-2 border-purple-500/50' : 'bg-white text-black border-2 border-gray-300'} font-bold text-xs sm:text-base shadow-xl`}>
                   "Check this! 🤯"
@@ -469,7 +469,7 @@ export default function Home() {
                 <Blobi emotion="happy" size={60} className="mx-auto mb-3 sm:mb-6" />
               </div>
 
-              <h2 className={`text-xl sm:text-2xl lg:text-4xl font-black mb-3 sm:mb-6 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}>
+              <h2 className={`text-4xl sm:text-2xl lg:text-4xl font-black mb-3 sm:mb-6 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}>
                 So... Ready to Start? 🚀
               </h2>
 
@@ -485,13 +485,23 @@ export default function Home() {
                   🔒 Free Forever • ⚡ 30-Second Install • 🎯 Works on Any Site
                 </p>
               </div>
-
+              
+              <div className='flex justify-center items-center'>
+              
+              <button
+                onClick={enterScrollMode}
+                className={`mr-4 px-6 py-3 rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-sm flex items-center gap-2 ${darkMode ? 'bg-white text-black hover:bg-gray-100' : 'bg-black text-white hover:bg-gray-900'} border-2 ${darkMode ? 'border-white' : 'border-black'}`}
+                
+                >
+                Download Now!
+              </button>
               <button
                 onClick={enterScrollMode}
                 className={`text-xs sm:text-sm font-bold ${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'} transition-colors underline ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}
-              >
+                >
                 or learn more ↓
               </button>
+              </div>
             </div>
           </div>
         </div>
