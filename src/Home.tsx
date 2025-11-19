@@ -264,7 +264,7 @@ export default function Home() {
             className={`absolute inset-0 flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-white'}`}
             style={getSlideTransform(0)}
           >
-            <div className="relative z-10 text-center max-w-4xl px-4 sm:px-8">
+            <div className="relative z-10 text-center max-w-4xl px-4 sm:px-8 mb-[4rem]">
               <h1 className={`text-4xl sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
                 Hey👋 Welcome to Indi Mapper
               </h1>
@@ -433,7 +433,7 @@ export default function Home() {
             className={`absolute inset-0 flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-gray-50'} overflow-y-auto`}
             style={getSlideTransform(3)}
           >
-            <div className="relative z-10 max-w-4xl px-4 sm:px-8 text-center py-4 sm:py-8">
+            <div className="relative z-10 max-w-4xl px-4 sm:px-8 text-center py-4 sm:py-8 mb-[4rem]">
               <div className={`flex flex-col items-center justify-center gap-1 sm:gap-2 mb-2 sm:mb-3 ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
               <h2 className={`text-4xl sm:text-2xl lg:text-4xl font-black mb-2 sm:mb-4 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
                 Introducting Indi Flows 🎬
@@ -473,7 +473,7 @@ export default function Home() {
             className={`absolute inset-0 flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-white'}`}
             style={getSlideTransform(4)}
           >
-            <div className="relative z-10 text-center max-w-3xl px-4 sm:px-8">
+            <div className="relative z-10 text-center max-w-3xl px-4 sm:px-8 mb-[4rem]">
               <div className={slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}>
                 <Blobi emotion="happy" size={60} className="mx-auto mb-3 sm:mb-6" />
               </div>
