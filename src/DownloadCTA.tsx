@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, Chrome } from 'lucide-react';
+import { Download } from 'lucide-react';
 import Blobi from './Blobi';
 
 
