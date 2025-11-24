@@ -286,6 +286,34 @@ export default function Home() {
 
         {/* Slides Container */}
         <div className="h-screen w-full relative overflow-hidden">
+          {/* Geometric Background Shapes */}
+          {!inScrollMode && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+              {/* Large Circle - Top Right */}
+              <div
+                className={`absolute top-10 right-10 w-96 h-96 rounded-full ${darkMode ? 'bg-purple-500/20' : 'bg-purple-500/15'} blur-xl animate-float`}
+              />
+
+              {/* Medium Square - Bottom Left */}
+              <div
+                className={`absolute bottom-10 left-10 w-80 h-80 ${darkMode ? 'bg-pink-500/20' : 'bg-pink-500/15'} blur-xl`}
+                style={{
+                  animation: 'float 15s ease-in-out infinite reverse',
+                  transform: 'rotate(45deg)',
+                }}
+              />
+
+              {/* Small Circle - Middle */}
+              <div
+                className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full ${darkMode ? 'bg-blue-500/15' : 'bg-blue-500/10'} blur-xl`}
+                style={{
+                  animation: 'float 18s ease-in-out infinite',
+                  animationDelay: '2s',
+                }}
+              />
+            </div>
+          )}
+
           {/* Slide 0: Hero */}
           <div
             className={`absolute inset-0 flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-white'}`}
@@ -297,7 +325,7 @@ export default function Home() {
               </h1>
               
               <h1 className={`text-lg sm:text-2xl lg:text-3xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-purple-500'} ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
-                The Best Chrome Extension Ever!
+                Your New Favorite Chrome Extension
               </h1>
               <div className={slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}>
                 <Blobi emotion="happy" size={60} className="mx-auto mb-3 sm:mb-6" />
