@@ -611,7 +611,7 @@ export default function Home() {
                 className={`mr-4 px-6 py-3 rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-sm flex items-center gap-2 ${darkMode ? 'bg-white text-black hover:bg-gray-100' : 'bg-black text-white hover:bg-gray-900'} border-2 ${darkMode ? 'border-white' : 'border-black'}`}
                 
                 >
-                Download Now!
+                Download
               </button>
               <button
                 onClick={enterScrollMode}
@@ -657,7 +657,7 @@ export default function Home() {
               
               >
                 <span className={`flex items-center justify-center gap-2 dark:text-white ${darkMode ? 'border-b border-white' : 'text-black'}`}>
-                  Download Free
+                  Download
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>

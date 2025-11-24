@@ -17,7 +17,7 @@ export default function DownloadCTA() {
     return () => clearInterval(interval);
   }, []);
 
-  
+
 
   return (
     <section id="download" className="min-h-screen bg-gray-50 dark:bg-black py-16 sm:py-20 md:py-24 px-4 relative overflow-hidden">
@@ -69,9 +69,9 @@ export default function DownloadCTA() {
           </a>
 
           {/* Free Badge */}
-          <div className="mt-6 sm:mt-8 inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-50 dark:bg-green-900/30 border-2 border-green-300 dark:border-green-700 rounded-full">
-            <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full opacity-90"></div>
-            <span className="font-sans font-bold text-sm sm:text-base text-green-700 dark:text-green-400">100% Free • No Credit Card Required</span>
+          <div className="mt-6 sm:mt-8 inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-purple-50 dark:bg-purple-900/30 border-2 border-purple-300 dark:border-purple-700 rounded-full">
+            <div className="w-2 h-2 sm:w-3 sm:h-3 bg-purple-500 rounded-full opacity-90"></div>
+            <span className="font-sans font-bold text-sm sm:text-base text-purple-700 dark:text-purple-400">100% Free • No Credit Card Required</span>
           </div>
         </div>
 

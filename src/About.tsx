@@ -87,7 +87,7 @@ export default function About() {
           href="#download"
           className={`inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg border-3 ${darkMode ? 'border-gray-700 text-white hover:bg-gray-900' : 'border-gray-300 text-black hover:bg-gray-50'} rounded-full hover:scale-105 transform transition-all duration-300 shadow-lg`}
         >
-          Download Free
+          Download
           <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>

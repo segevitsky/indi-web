@@ -70,7 +70,7 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
           href="#download"
           className="px-4 sm:px-6 py-2 sm:py-2.5 font-sans font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl hover:scale-105 transform transition-all duration-300 border-2 border-white opacity-90 hover:opacity-100 dark:text-white"
         >
-          Download Free
+          Download
         </a>
       </div>
     </div>
