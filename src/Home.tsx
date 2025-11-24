@@ -606,7 +606,8 @@ export default function Home() {
               ].map((feature, i) => (
                 <div
                   key={i}
-                  className={`px-4 sm:px-6 py-2 sm:py-3 ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} backdrop-blur-sm rounded-full shadow-lg border-2 font-sans font-medium text-sm sm:text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'} hover:scale-105 transform transition-all duration-300 hover:shadow-xl`}
+                  // add border white to dark mode
+                  className={`px-4 sm:px-6 py-2 sm:py-3 ${darkMode ? 'bg-gray-900 border-solid border-white' : 'bg-gray-50 border-gray-200'} backdrop-blur-sm rounded-full shadow-lg border-2 font-sans font-medium text-sm sm:text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'} hover:scale-105 transform transition-all duration-300 hover:shadow-xl`}
                 >
                   {feature}
                 </div>

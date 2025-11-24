@@ -40,7 +40,7 @@ const Footer = () => {
           </div>
 
           {/* Quick Links */}
-          <div className='xs: flex justify-between col-span-1 md:col-span-2 grid grid-cols-2 gap-8'>
+          <div className='xs:flex justify-between col-span-1 md:col-span-2 grid grid-cols-2 gap-8'>
               <div>
                 <h4 className="font-sans font-semibold text-black dark:text-white mb-4">Product</h4>
                 <ul className="space-y-2">
