@@ -17,6 +17,8 @@ export default function DownloadCTA() {
     return () => clearInterval(interval);
   }, []);
 
+  
+
   return (
     <section id="download" className="min-h-screen bg-gray-50 dark:bg-black py-16 sm:py-20 md:py-24 px-4 relative overflow-hidden">
       <div className="max-w-5xl mx-auto text-center relative z-10">
