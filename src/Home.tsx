@@ -124,31 +124,57 @@ export default function Home() {
   }, [currentSlide, isTransitioning, inScrollMode]);
 
   // Handle touch events for mobile
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchEndX, setTouchEndX] = useState(0);
+
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientY);
     setTouchEnd(e.targetTouches[0].clientY);
+    setTouchStartX(e.targetTouches[0].clientX);
+    setTouchEndX(e.targetTouches[0].clientX);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     // Prevent default scroll behavior on mobile
     e.preventDefault();
     setTouchEnd(e.targetTouches[0].clientY);
+    setTouchEndX(e.targetTouches[0].clientX);
   };
 
   const handleTouchEnd = () => {
     if (isTransitioning) return;
 
     const minSwipeDistance = 50;
-    const distance = touchStart - touchEnd;
-    const isSwipeDown = distance > minSwipeDistance;
-    const isSwipeUp = distance < -minSwipeDistance;
+    const verticalDistance = touchStart - touchEnd;
+    const horizontalDistance = touchStartX - touchEndX;
 
-    if (isSwipeDown && currentSlide < totalSlides - 1) {
-      nextSlide();
-    } else if (isSwipeDown && currentSlide === totalSlides - 1) {
-      enterScrollMode();
-    } else if (isSwipeUp && currentSlide > 0) {
-      prevSlide();
+    // Check if swipe is more vertical or horizontal
+    const isVerticalSwipe = Math.abs(verticalDistance) > Math.abs(horizontalDistance);
+
+    if (isVerticalSwipe) {
+      // Vertical swipe logic
+      const isSwipeDown = verticalDistance > minSwipeDistance;
+      const isSwipeUp = verticalDistance < -minSwipeDistance;
+
+      if (isSwipeDown && currentSlide < totalSlides - 1) {
+        nextSlide();
+      } else if (isSwipeDown && currentSlide === totalSlides - 1) {
+        enterScrollMode();
+      } else if (isSwipeUp && currentSlide > 0) {
+        prevSlide();
+      }
+    } else {
+      // Horizontal swipe logic
+      const isSwipeLeft = horizontalDistance > minSwipeDistance;
+      const isSwipeRight = horizontalDistance < -minSwipeDistance;
+
+      if (isSwipeLeft && currentSlide < totalSlides - 1) {
+        nextSlide();
+      } else if (isSwipeLeft && currentSlide === totalSlides - 1) {
+        enterScrollMode();
+      } else if (isSwipeRight && currentSlide > 0) {
+        prevSlide();
+      }
     }
   };
 
@@ -225,19 +251,19 @@ export default function Home() {
           <button
             onClick={prevSlide}
             disabled={isTransitioning}
-            className={`xs:hidden md:flex fixed left-2 sm:left-6 top-1/3 -translate-y-1/2 z-40 p-2 sm:p-4 rounded-full ${darkMode ? 'bg-gray-800 text-white border-purple-500' : 'bg-white text-gray-900 border-purple-600'} shadow-2xl hover:scale-110 transition-all disabled:opacity-50 border-2 text-lg sm:text-2xl font-bold items-center justify-center`}
+            className={`xs:hidden md:flex fixed left-6 bottom-6 z-40 w-10 h-10 rounded-full ${darkMode ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-white text-gray-900 hover:bg-gray-100'} hover:scale-110 transition-all disabled:opacity-50 border-2 ${darkMode ? 'border-gray-700' : 'border-gray-300'} text-xl items-center justify-center shadow-lg`}
             id='arrow-left'
           >
-            ←
+            ‹
           </button>
         )}
         {currentSlide < totalSlides - 1 && (
           <button
             onClick={nextSlide}
             disabled={isTransitioning}
-            className={`xs:hidden md:flex fixed right-2 sm:right-6 top-1/3 -translate-y-1/2 z-40 p-2 sm:p-4 rounded-full ${darkMode ? 'bg-gray-800 text-white border-purple-500' : 'bg-white text-gray-900 border-purple-600'} shadow-2xl hover:scale-110 transition-all disabled:opacity-50 border-2 text-lg sm:text-2xl font-bold items-center justify-center`}
+            className={`xs:hidden md:flex fixed left-20 bottom-6 z-40 w-10 h-10 rounded-full ${darkMode ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-white text-gray-900 hover:bg-gray-100'} hover:scale-110 transition-all disabled:opacity-50 border-2 ${darkMode ? 'border-gray-700' : 'border-gray-300'} text-xl items-center justify-center shadow-lg`}
           >
-            →
+            ›
           </button>
         )}
 
