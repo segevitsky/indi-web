@@ -225,7 +225,8 @@ export default function Home() {
           <button
             onClick={prevSlide}
             disabled={isTransitioning}
-            className={`hidden md:flex fixed left-2 sm:left-6 top-1/3 -translate-y-1/2 z-40 p-2 sm:p-4 rounded-full ${darkMode ? 'bg-gray-800 text-white border-purple-500' : 'bg-white text-gray-900 border-purple-600'} shadow-2xl hover:scale-110 transition-all disabled:opacity-50 border-2 text-lg sm:text-2xl font-bold items-center justify-center`}
+            className={`xs:hidden md:flex fixed left-2 sm:left-6 top-1/3 -translate-y-1/2 z-40 p-2 sm:p-4 rounded-full ${darkMode ? 'bg-gray-800 text-white border-purple-500' : 'bg-white text-gray-900 border-purple-600'} shadow-2xl hover:scale-110 transition-all disabled:opacity-50 border-2 text-lg sm:text-2xl font-bold items-center justify-center`}
+            id='arrow-left'
           >
             ←
           </button>
@@ -234,7 +235,7 @@ export default function Home() {
           <button
             onClick={nextSlide}
             disabled={isTransitioning}
-            className={`hidden md:flex fixed right-2 sm:right-6 top-1/3 -translate-y-1/2 z-40 p-2 sm:p-4 rounded-full ${darkMode ? 'bg-gray-800 text-white border-purple-500' : 'bg-white text-gray-900 border-purple-600'} shadow-2xl hover:scale-110 transition-all disabled:opacity-50 border-2 text-lg sm:text-2xl font-bold items-center justify-center`}
+            className={`xs:hidden md:flex fixed right-2 sm:right-6 top-1/3 -translate-y-1/2 z-40 p-2 sm:p-4 rounded-full ${darkMode ? 'bg-gray-800 text-white border-purple-500' : 'bg-white text-gray-900 border-purple-600'} shadow-2xl hover:scale-110 transition-all disabled:opacity-50 border-2 text-lg sm:text-2xl font-bold items-center justify-center`}
           >
             →
           </button>
@@ -283,6 +284,9 @@ export default function Home() {
               <p className={`text-md sm:text-lg lg:text-xl font-bold mb-4 sm:mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-2xl mx-auto ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}>
                 Your new API debugging buddy.<br className="hidden sm:inline" /> Let me show you around!
               </p>
+
+
+
 
               <div className={slideEntered && currentSlide === 0 ? 'animate-fade-in mb-4 sm:mb-6' : 'opacity-0 mb-4 sm:mb-6'}>
               </div>
@@ -548,7 +552,7 @@ export default function Home() {
   
               
               >
-                <span className="flex items-center justify-center gap-2 dark:text-white">
+                <span className={`flex items-center justify-center gap-2 dark:text-white ${darkMode ? 'border-b border-white' : 'text-black'}`}>
                   Download Free
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -567,7 +571,7 @@ export default function Home() {
               </a>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-3 sm:gap-4 max-w-4xl mx-auto px-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-4xl mx-auto px-4">
               {[
                 '🎯 Visual API Mapping',
                 '⚡ Real-time Monitoring',

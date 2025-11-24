@@ -41,7 +41,6 @@ export default function DownloadCTA() {
           {/* Chrome Icon */}
           <div className="flex justify-center mb-6 sm:mb-8">
             <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 rounded-full flex items-center justify-center shadow-2xl opacity-90">
-              <Chrome className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
               <Blobi size={40} className="absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4" />
             </div>
           </div>

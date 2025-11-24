@@ -40,61 +40,66 @@ const Footer = () => {
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h4 className="font-sans font-semibold text-black dark:text-white mb-4">Product</h4>
-            <ul className="space-y-2">
-              <li>
-                <a href="#home" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
-                  Home
-                </a>
-              </li>
-              <li>
-                <a href="#about" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
-                  About
-                </a>
-              </li>
-              <li>
-                <a href="#download" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
-                  Download
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#download"
-                  className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-                >
-                  Get Started
-                </a>
-              </li>
-            </ul>
+          <div className='xs: flex justify-between col-span-1 md:col-span-2 grid grid-cols-2 gap-8'>
+              <div>
+                <h4 className="font-sans font-semibold text-black dark:text-white mb-4">Product</h4>
+                <ul className="space-y-2">
+                  <li>
+                    <a href="#home" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                      Home
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#about" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                      About
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#download" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                      Download
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#download"
+                      className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+                    >
+                      Get Started
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Support */}
+              <div>
+                <h4 className="font-sans font-semibold text-black dark:text-white mb-4">Support</h4>
+                <ul className="space-y-2">
+                  <li>
+                    <a href="#contact" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                      Contact Us
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/help" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                      Help Center
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/docs" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                      Documentation
+                    </a>
+                  </li>
+                  <li>
+                    <a href="mailto:support@indimapper.com" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                      Email Support
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
           </div>
 
-          {/* Support */}
-          <div>
-            <h4 className="font-sans font-semibold text-black dark:text-white mb-4">Support</h4>
-            <ul className="space-y-2">
-              <li>
-                <a href="#contact" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
-                  Contact Us
-                </a>
-              </li>
-              <li>
-                <a href="/help" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
-                  Help Center
-                </a>
-              </li>
-              <li>
-                <a href="/docs" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
-                  Documentation
-                </a>
-              </li>
-              <li>
-                <a href="mailto:support@indimapper.com" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
-                  Email Support
-                </a>
-              </li>
-            </ul>
-          </div>
+
         </div>
 
         {/* Divider */}
