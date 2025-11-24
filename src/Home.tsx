@@ -49,14 +49,20 @@ export default function Home() {
   const totalSlides = 5;
   const scrollSectionRef = useRef<HTMLDivElement>(null);
 
-  // Sync with Navbar dark mode
+  // Sync with Navbar dark mode and localStorage
   useEffect(() => {
+    // Check localStorage first
+    const savedMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(savedMode);
+    if (savedMode) {
+      document.documentElement.classList.add('dark');
+    }
+
     const checkDarkMode = () => {
       const isDark = document.documentElement.classList.contains('dark');
       setDarkMode(isDark);
     };
 
-    checkDarkMode();
     const interval = setInterval(checkDarkMode, 100);
     return () => clearInterval(interval);
   }, []);
@@ -215,9 +221,53 @@ export default function Home() {
   };
 
 
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem('darkMode', String(newMode));
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
   return (
     <div className={`min-h-screen w-full relative overflow-x-hidden ${darkMode ? 'bg-gray-900' : 'bg-white'} ${inScrollMode ? 'overflow-y-auto' : 'overflow-y-hidden'}`}>
       {inScrollMode && <Navbar inScrollMode={inScrollMode} setInScrollMode={setInScrollMode} />}
+
+      {/* Dark Mode Toggle (shown during slides) */}
+      {!inScrollMode && (
+        <button
+          onClick={toggleDarkMode}
+          className={`fixed top-2 left-2 z-50 p-1 rounded-full shadow-2xl transition-all hover:scale-110 ${darkMode ? 'bg-gray-900 text-white hover:bg-gray-800' : 'bg-white text-gray-900 hover:bg-gray-100'} border-2 ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}
+          aria-label="Toggle dark mode"
+        >
+          <span className="text-xl sm:text-2xl">{darkMode ? '☀️' : '🌙'}</span>
+        </button>
+      )}
+
+      {/* Download Button (shown during slides) */}
+      {!inScrollMode && (
+        <button
+          onClick={() => {
+            setInScrollMode(true);
+            setTimeout(() => {
+              const downloadSection = document.getElementById('download');
+              if (downloadSection) {
+                downloadSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }, 100);
+          }}
+          className={`fixed top-2 right-2 z-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-xs sm:text-sm flex items-center gap-1 sm:gap-2 ${darkMode ? 'bg-white text-black hover:bg-gray-100' : 'bg-black text-white hover:bg-gray-900'} border-2 ${darkMode ? 'border-white' : 'border-black'}`}
+        >
+          <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span className="hidden sm:inline">Download</span>
+        </button>
+      )}
+
       {/* Skip to Website Button (shown during slides) */}
       {!inScrollMode && (
         <button

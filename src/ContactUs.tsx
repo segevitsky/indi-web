@@ -37,7 +37,7 @@ export default function ContactUs() {
         body: JSON.stringify({
           access_key: 'acc914d7-9d0a-43b0-9bc5-e9ea0bf8e1ba',
           email: email,
-          message: `🚀 New IndieMapper Pioneer Registration!
+          message: `🚀 New Indi Mapper Pioneer Registration!
           
           Email: ${email}
           Time: ${new Date().toLocaleString()}
@@ -107,7 +107,7 @@ export default function ContactUs() {
             e.preventDefault();
             handleSubmit();
           }}
-          className="w-full py-3 rounded-lg hover:opacity-100 font-bold shadow-lg transition-all opacity-90"
+          className={`${darkMode ? 'bg-black text-white border border-gray-300' : 'bg-white text-black'} w-full py-3 rounded-lg hover:opacity-100 font-bold shadow-lg transition-all opacity-90`}
         >
           Send Message
         </button>
