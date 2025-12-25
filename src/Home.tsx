@@ -408,10 +408,8 @@ export default function Home() {
                   <div className={`flex sm:flex-row items-center justify-center lg:justify-start gap-4 sm:gap-6 mb-4 sm:mb-8 ${slideEntered && currentSlide === 1 ? 'animate-fade-in' : 'opacity-0'}`}>
                     <Blobi emotion="calm" size={60} />
                     <div className="relative">
-                      <div className={`relative p-3 sm:p-6 rounded-2xl ${darkMode ? 'bg-gray-900 text-white border-2 sm:border-4 border-purple-500/50' : 'bg-white text-black border-2 sm:border-4 border-gray-300'} font-black text-sm sm:text-xl max-w-xs sm:max-w-md shadow-2xl`}>
+                      <div className={`relative p-3 sm:p-6 rounded-2xl ${darkMode ? 'bg-gray-900 text-white border-2 sm:border-4 border-pink-500/50' : 'bg-white text-black border-2 sm:border-4 border-gray-300'} font-black text-sm sm:text-xl max-w-xs sm:max-w-md shadow-2xl`}>
                         <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                          {/* <span className="text-xl sm:text-2xl">👀</span> */}
-                          {/* <span className={`text-xs sm:text-base ${darkMode ? 'text-gray-400' : 'text-gray-600'} uppercase tracking-wide`}>Yo Looki Here!</span> */}
                         </div>
                         👀 "See those dots?"
                         <div className="hidden lg:block absolute -right-8 top-1/2 -translate-y-1/2 text-4xl">
@@ -600,7 +598,7 @@ export default function Home() {
 
               <div className={`space-y-2 sm:space-y-3 mb-4 sm:mb-6 ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}>
                 <p className={`text-xs sm:text-sm font-bold ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                  🔒 Free Forever • ⚡ 30-Second Install • 🎯 Works on Any Site
+                  🔒 Free • ⚡ 30-Second Install • 🎯 Works on Any Site
                 </p>
               </div>
               
@@ -628,6 +626,32 @@ export default function Home() {
       {/* Traditional Scroll Sections */}
       <div ref={scrollSectionRef} className={`${inScrollMode ? 'block' : 'hidden'}`}>
         <section id="home" className={`min-h-screen flex items-center justify-center relative ${darkMode ? 'bg-black' : 'bg-white'} overflow-hidden`}>
+          {/* Geometric Background Shapes */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+            {/* Large Circle - Top Right */}
+            <div
+              className={`absolute top-10 right-10 w-96 h-96 rounded-full ${darkMode ? 'bg-purple-500/20' : 'bg-purple-500/15'} blur-xl animate-float`}
+            />
+
+            {/* Medium Square - Bottom Left */}
+            <div
+              className={`absolute bottom-10 left-10 w-80 h-80 ${darkMode ? 'bg-pink-500/20' : 'bg-pink-500/15'} blur-xl`}
+              style={{
+                animation: 'float 15s ease-in-out infinite reverse',
+                transform: 'rotate(45deg)',
+              }}
+            />
+
+            {/* Small Circle - Middle */}
+            <div
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full ${darkMode ? 'bg-blue-500/15' : 'bg-blue-500/10'} blur-xl`}
+              style={{
+                animation: 'float 18s ease-in-out infinite',
+                animationDelay: '2s',
+              }}
+            />
+          </div>
+
           <FloatingIndicators />
 
           <div className="container mx-auto px-4 sm:px-6 text-center relative z-10 pt-16 sm:pt-20">
@@ -685,7 +709,7 @@ export default function Home() {
                 <div
                   key={i}
                   // add border white to dark mode
-                  className={`px-4 sm:px-6 py-2 sm:py-3 ${darkMode ? 'bg-gray-900 border-solid border-white' : 'bg-gray-50 border-gray-200'} backdrop-blur-sm rounded-full shadow-lg border-2 font-sans font-medium text-sm sm:text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'} hover:scale-105 transform transition-all duration-300 hover:shadow-xl`}
+                  className={`px-4 sm:px-6 py-2 sm:py-3 ${darkMode ? 'bg-gray-900 border-solid' : 'bg-gray-50 border-purple-300'} backdrop-blur-sm rounded-full shadow-lg border-2 font-sans font-medium text-sm sm:text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'} hover:scale-105 transform transition-all duration-300 hover:shadow-xl`}
                 >
                   {feature}
                 </div>
