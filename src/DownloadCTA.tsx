@@ -5,7 +5,6 @@ import Blobi from './Blobi';
 
 export default function DownloadCTA() {
   const [darkMode, setDarkMode] = useState(false);
-  const CHROME_EXTENSION_URL = 'https://chrome.google.com/webstore'; // TODO: Update with actual extension URL
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -16,6 +15,19 @@ export default function DownloadCTA() {
     const interval = setInterval(checkDarkMode, 100);
     return () => clearInterval(interval);
   }, []);
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = '/indi-mapper.zip';
+    link.download = 'indi-mapper.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+      window.open('/mapper-guide', '_blank');
+    }, 500);
+  };
 
 
 
@@ -55,18 +67,16 @@ export default function DownloadCTA() {
           </p>
 
           {/* Download Button */}
-          <a
-            href={CHROME_EXTENSION_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-10 py-4 sm:py-5 font-sans font-bold text-base sm:text-xl rounded-full shadow-2xl hover:scale-105 transform transition-all duration-300 border-2 sm:border-4 border-white opacity-90 hover:opacity-100 w-full sm:w-auto mr-4 dark:text-white"
+          <button
+            onClick={handleDownload}
+            className="mr-4 group inline-flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-10 py-4 sm:py-5 font-sans font-bold text-base sm:text-xl rounded-full shadow-2xl hover:scale-105 transform transition-all duration-300 bg-gradient-to-r from-purple-600 to-pink-600 text-white w-full sm:w-auto"
           >
             <Download className="w-5 h-5 sm:w-6 sm:h-6" />
             Download Extension
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
-          </a>
+          </button>
 
           {/* Free Badge */}
           <div className="mt-6 sm:mt-8 inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-purple-50 dark:bg-purple-900/30 border-2 border-purple-300 dark:border-purple-700 rounded-full">

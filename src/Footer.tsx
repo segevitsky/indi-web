@@ -85,7 +85,7 @@ const Footer = () => {
                     </a>
                   </li>
                   <li>
-                    <a href="/docs" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                    <a href="/mapper-guide" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                       Documentation
                     </a>
                   </li>

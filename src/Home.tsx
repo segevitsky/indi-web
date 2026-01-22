@@ -232,6 +232,21 @@ export default function Home() {
     }
   };
 
+  const handleDownload = () => {
+    // Trigger download
+    const link = document.createElement('a');
+    link.href = '/indi-mapper.zip';
+    link.download = 'indi-mapper.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Open guide page in new tab after short delay
+    setTimeout(() => {
+      window.open('/mapper-guide', '_blank');
+    }, 500);
+  };
+
   return (
     <div className={`min-h-screen w-full relative overflow-x-hidden ${darkMode ? 'bg-gray-900' : 'bg-white'} ${inScrollMode ? 'overflow-y-auto' : 'overflow-y-hidden'}`}>
       {inScrollMode && <Navbar inScrollMode={inScrollMode} setInScrollMode={setInScrollMode} />}
@@ -250,21 +265,13 @@ export default function Home() {
       {/* Download Button (shown during slides) */}
       {!inScrollMode && (
         <button
-          onClick={() => {
-            setInScrollMode(true);
-            setTimeout(() => {
-              const downloadSection = document.getElementById('download');
-              if (downloadSection) {
-                downloadSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }, 100);
-          }}
+          onClick={handleDownload}
           className={`fixed top-2 right-2 z-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-xs sm:text-sm flex items-center gap-1 sm:gap-2 ${darkMode ? 'bg-white text-black hover:bg-gray-100' : 'bg-black text-white hover:bg-gray-900'} border-2 ${darkMode ? 'border-white' : 'border-black'}`}
         >
           <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
-          <span className="hidden sm:inline">Download</span>
+          <span className="hidden sm:inline">Download Now</span>
         </button>
       )}
 
@@ -586,11 +593,11 @@ export default function Home() {
               </div>
 
               <h2 className={`text-4xl sm:text-2xl lg:text-4xl font-black mb-3 sm:mb-6 ${darkMode ? 'text-white' : 'text-black'} ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}>
-                So... Ready to Start? 🚀
+                Get It Now - It's Free! 🎁
               </h2>
 
               <p className={`text-base sm:text-base lg:text-lg font-bold mb-4 sm:mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-xl mx-auto ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}>
-                Join thousands of developers making API debugging fun!
+                Download now and start debugging smarter in under 60 seconds!
               </p>
 
               <div className={slideEntered && currentSlide === 4 ? 'animate-fade-in mb-6 sm:mb-8' : 'opacity-0 mb-6 sm:mb-8'}>
@@ -598,18 +605,23 @@ export default function Home() {
 
               <div className={`space-y-2 sm:space-y-3 mb-4 sm:mb-6 ${slideEntered && currentSlide === 4 ? 'animate-fade-in' : 'opacity-0'}`}>
                 <p className={`text-xs sm:text-sm font-bold ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                  🔒 Free • ⚡ 30-Second Install • 🎯 Works on Any Site
+                  🔒 100% Free Forever • ⚡ No Account Required • 🎯 Works Instantly
                 </p>
               </div>
-              
-              <div className='flex justify-center items-center'>
-              
+
+              <div className='flex flex-col sm:flex-row justify-center items-center gap-4'>
+
               <button
-                onClick={enterScrollMode}
-                className={`mr-4 px-6 py-3 rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-sm flex items-center gap-2 ${darkMode ? 'bg-white text-black hover:bg-gray-100' : 'bg-black text-white hover:bg-gray-900'} border-2 ${darkMode ? 'border-white' : 'border-black'}`}
-                
+                onClick={handleDownload}
+                className={`group px-8 py-4 rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-base sm:text-lg flex items-center gap-3 ${darkMode ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500'} border-2 border-transparent`}
                 >
-                Download
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Free Now
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
               </button>
               <button
                 onClick={enterScrollMode}
@@ -674,19 +686,18 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 mb-12 sm:mb-16 px-4">
-              <a
-                href="#download"
-                              className={`px-6 sm:px-8 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg border-3 ${darkMode ? 'border-gray-700 text-white hover:bg-gray-900' : 'border-gray-300 text-black hover:bg-gray-50'} rounded-full hover:scale-105 transform transition-all duration-300 shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto`}
-  
-              
+              <button
+                onClick={handleDownload}
+                className={`group px-6 sm:px-8 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full hover:scale-105 transform transition-all duration-300 shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto`}
               >
-                <span className={`flex items-center justify-center gap-2 dark:text-white ${darkMode ? 'border-b border-white' : 'text-black'}`}>
-                  Download
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </span>
-              </a>
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Free
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
 
               <a
                 href="#about"

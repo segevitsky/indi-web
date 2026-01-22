@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import IndiBlobLogo from "./IndiBlobLogo";
+import { Download } from "lucide-react";
 
 export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode: boolean; setInScrollMode: (value: boolean) => void }) {
   const [darkMode, setDarkMode] = useState(false);
@@ -24,6 +25,19 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
     } else {
       document.documentElement.classList.remove('dark');
     }
+  };
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = '/indi-mapper.zip';
+    link.download = 'indi-mapper.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+      window.open('/mapper-guide', '_blank');
+    }, 500);
   };
 
   return (
@@ -66,12 +80,13 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
           <span className="text-lg sm:text-2xl">{darkMode ? '☀️' : '🌙'}</span>
         </button>
 
-        <a
-          href="#download"
-          className="px-4 sm:px-6 py-2 sm:py-2.5 font-sans font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl hover:scale-105 transform transition-all duration-300 border-2 border-white opacity-90 hover:opacity-100 dark:text-white"
+        <button
+          onClick={handleDownload}
+          className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 font-sans font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl hover:scale-105 transform transition-all duration-300 bg-gradient-to-r from-purple-600 to-pink-600 text-white"
         >
+          <Download className="w-4 h-4" />
           Download
-        </a>
+        </button>
       </div>
     </div>
   </nav>
