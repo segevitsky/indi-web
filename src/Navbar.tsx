@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import IndiBlobLogo from "./IndiBlobLogo";
-import { Download } from "lucide-react";
+import { Download, LayoutDashboard } from "lucide-react";
 
 export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode: boolean; setInScrollMode: (value: boolean) => void }) {
   const [darkMode, setDarkMode] = useState(false);
@@ -28,16 +28,7 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
   };
 
   const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = '/indi-mapper.zip';
-    link.download = 'indi-mapper.zip';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setTimeout(() => {
-      window.open('/mapper-guide', '_blank');
-    }, 500);
+    window.open('https://chromewebstore.google.com/detail/indi-mapper-developer-too/fhjekmbfchnehkoplcpmdgeabgimgcna', '_blank');
   };
 
   return (
@@ -67,6 +58,9 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
         <a href="#contact" onClick={() => setInScrollMode(true)} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
           Contact
         </a>
+        <a href="/login" className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
+          Dashboard
+        </a>
       </div>
 
       {/* Action Buttons */}
@@ -79,6 +73,14 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
         >
           <span className="text-lg sm:text-2xl">{darkMode ? '☀️' : '🌙'}</span>
         </button>
+
+        <a
+          href="/login"
+          className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 font-sans font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl hover:scale-105 transform transition-all duration-300 border-2 border-purple-600 text-purple-600 dark:text-purple-400 dark:border-purple-400 bg-transparent"
+        >
+          <LayoutDashboard className="w-4 h-4" />
+          <span className="hidden sm:inline">Dashboard</span>
+        </a>
 
         <button
           onClick={handleDownload}

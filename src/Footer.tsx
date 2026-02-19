@@ -85,8 +85,8 @@ const Footer = () => {
                     </a>
                   </li>
                   <li>
-                    <a href="/mapper-guide" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
-                      Documentation
+                    <a href="https://chromewebstore.google.com/detail/indi-mapper-developer-too/fhjekmbfchnehkoplcpmdgeabgimgcna" target="_blank" rel="noopener noreferrer" className="font-sans text-sm sm:text-base text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                      Chrome Web Store
                     </a>
                   </li>
                   <li>

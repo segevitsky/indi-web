@@ -1,73 +1,156 @@
 import { useState, useEffect } from 'react';
-import { Settings, AlertCircle, Layout, BellDot } from 'lucide-react';
-import UserProfile from './UserProfile';
-import { getJiraConfig, getUserProfile, saveJiraConfig } from './services/userService';
-import DynamicDomainsForm from './AddDomain';
-
+import { useNavigate } from 'react-router-dom';
+import {
+  Layout,
+  BellDot,
+  Copy,
+  Check,
+  LogOut,
+  Key,
+  Activity,
+  AlertTriangle,
+  RefreshCw,
+} from 'lucide-react';
+import { supabase, type Team, type Indicator, type Violation } from './supabase/config';
+import { signOut, getUser, getTeamForUser, createTeamForUser } from './supabase/auth';
+import type { User } from '@supabase/supabase-js';
 
 const Dashboard = () => {
-  const [jiraConfig, setJiraConfig] = useState({
-    domain: '',
-    apiToken: '',
-    email: '',
-    isConnected: false,
-    projectKey: ''
-  });
-  const [userData, setUserData] = useState();
-  const [subscriptionData, setSubscriptionData] = useState({
-    plan: '',
-    activeUntil: '2025-02-01',
-    status: 'Active',
-    jiraDomain: '',
-    jiraEmail: '',
-    jiraApiToken: '',
-    slackWebhookUrl: ''
-  });
-  console.log({ userData });
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [team, setTeam] = useState<Team | null>(null);
+  const [indicators, setIndicators] = useState<Indicator[]>([]);
+  const [violations, setViolations] = useState<Violation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
-
-  const [slackConfig, setSlackConfig] = useState({
-    webhookUrl: '',
-    isConnected: false
-  });
-  
-  
-  const [jiraSaveMessage, setJiraMessage] = useState({ type: '', text: '' });
-  // const [slackSaveMessage, setSlackMessage] = useState({ type: '', text: '' });
-
-  
-
-  // Mock subscription data - יוחלף בהמשך במידע מפיירבייס
-
-
+  // Load user and team data
   useEffect(() => {
-    const loadProfile = async () => {
+    const loadData = async () => {
       try {
-        const userData = await getUserProfile();
-        setUserData(userData as any);
-        setSubscriptionData((ps) => ({...ps, plan: userData.plan}));
-      } catch (error) {
-        alert({ type: 'error', text: 'Failed to load profile' });
-      }
-    };
-    
-    loadProfile();
-  }, []);
+        const currentUser = await getUser();
+        if (!currentUser) {
+          navigate('/login');
+          return;
+        }
+        setUser(currentUser);
 
-  useEffect(() => {
-    const loadJiraConfig = async () => {
-      try {
-        // Load Jira configuration from the database or local storage
-        const jiraConfigData = await getJiraConfig(); // Replace with actual data fetching logic
-        setJiraConfig(jiraConfigData as any);
+        // Get or create team
+        let userTeam = await getTeamForUser(currentUser.id);
+        if (!userTeam) {
+          userTeam = await createTeamForUser(currentUser);
+        }
+        setTeam(userTeam);
+
+        // Load indicators for team
+        if (userTeam) {
+          const { data: indicatorsData } = await supabase
+            .from('indicators')
+            .select('*')
+            .eq('team_id', userTeam.id)
+            .order('created_at', { ascending: false });
+
+          setIndicators(indicatorsData || []);
+
+          // Load violations for team
+          const { data: violationsData } = await supabase
+            .from('violations')
+            .select('*')
+            .eq('team_id', userTeam.id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+          setViolations(violationsData || []);
+        }
       } catch (error) {
-        console.error('Error loading Jira configuration:', error);
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadJiraConfig();
-  }, []);
-  
+    loadData();
+  }, [navigate]);
+
+  // Subscribe to real-time violations
+  useEffect(() => {
+    if (!team) return;
+
+    const channel = supabase
+      .channel('violations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'violations',
+          filter: `team_id=eq.${team.id}`,
+        },
+        (payload) => {
+          setViolations((prev) => [payload.new as Violation, ...prev].slice(0, 50));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [team]);
+
+  const handleCopyApiKey = () => {
+    if (team?.api_key) {
+      navigator.clipboard.writeText(team.api_key);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
+  const refreshViolations = async () => {
+    if (!team) return;
+    const { data } = await supabase
+      .from('violations')
+      .select('*')
+      .eq('team_id', team.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    setViolations(data || []);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
+  };
+
+  const getViolationTypeColor = (type: string) => {
+    switch (type) {
+      case 'schema_drift':
+        return 'bg-purple-100 text-purple-700';
+      case 'missing_field':
+        return 'bg-red-100 text-red-700';
+      case 'type_mismatch':
+        return 'bg-orange-100 text-orange-700';
+      case 'unexpected_status':
+        return 'bg-red-100 text-red-700';
+      case 'slow_response':
+        return 'bg-yellow-100 text-yellow-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-pink-50 to-rose-50">
+        <div className="bg-white p-8 rounded-2xl shadow-lg">
+          <div className="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-50">
@@ -81,198 +164,193 @@ const Dashboard = () => {
             </div>
             <div className="flex items-center space-x-4">
               <BellDot className="w-5 h-5 text-gray-500 hover:text-gray-700 cursor-pointer" />
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center text-white">
-                U
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center text-white text-sm font-medium">
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <span className="text-sm text-gray-600 hidden sm:block">{user?.email}</span>
               </div>
+              <button
+                onClick={handleSignOut}
+                className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
       </nav>
 
-            <UserProfile />
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Subscription Card */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Team Info & API Key Card */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">
-              {subscriptionData.plan} Plan
-            </h2>
-            <button disabled={true} className="cursor-not-allowed opacity-9 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:opacity-90 transition-opacity">
-              Upgrade
-            </button>
+            <div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">
+                {team?.name || 'My Team'}
+              </h2>
+              <p className="text-gray-500 text-sm mt-1">
+                Created {team?.created_at ? formatDate(team.created_at) : 'recently'}
+              </p>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <p className="text-gray-500 mb-1">Active Until</p>
-              <p className="text-lg font-semibold">{subscriptionData.activeUntil}</p>
+
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Key className="w-5 h-5 text-rose-500" />
+                <div>
+                  <p className="text-sm text-gray-500">API Key</p>
+                  <code className="text-sm font-mono text-gray-800">
+                    {team?.api_key || 'No API key'}
+                  </code>
+                </div>
+              </div>
+              <button
+                onClick={handleCopyApiKey}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:opacity-90 transition-opacity"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
             </div>
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <p className="text-gray-500 mb-1">Status</p>
-              <p className="text-lg font-semibold text-green-500">{subscriptionData.status}</p>
+          </div>
+
+          <p className="text-sm text-gray-500 mt-4">
+            Use this API key in your <code className="bg-gray-100 px-1 rounded">indi.init()</code> call to send violations to this dashboard.
+          </p>
+        </div>
+
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Monitored Endpoints */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <Activity className="w-5 h-5 text-rose-500" />
+                <h3 className="text-xl font-bold">Monitored Endpoints</h3>
+              </div>
+              <span className="text-sm text-gray-500">{indicators.length} endpoints</span>
             </div>
+
+            {indicators.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Activity className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>No endpoints monitored yet</p>
+                <p className="text-sm mt-1">
+                  Use <code className="bg-gray-100 px-1 rounded">indi.watch()</code> to start monitoring
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {indicators.map((indicator) => (
+                  <div
+                    key={indicator.id}
+                    className="p-3 bg-gray-50 rounded-lg flex items-center justify-between"
+                  >
+                    <div>
+                      <code className="text-sm font-mono text-gray-800">
+                        {indicator.endpoint}
+                      </code>
+                      <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">
+                        {indicator.method}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {formatDate(indicator.created_at)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Violations */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-5 h-5 text-rose-500" />
+                <h3 className="text-xl font-bold">Recent Violations</h3>
+              </div>
+              <button
+                onClick={refreshViolations}
+                className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                title="Refresh"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+
+            {violations.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <AlertTriangle className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>No violations detected</p>
+                <p className="text-sm mt-1">Your APIs are running smoothly!</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {violations.map((violation) => (
+                  <div
+                    key={violation.id}
+                    className="p-3 bg-gray-50 rounded-lg border-l-4 border-rose-400"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span
+                        className={`px-2 py-0.5 text-xs rounded font-medium ${getViolationTypeColor(
+                          violation.type
+                        )}`}
+                      >
+                        {violation.type}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {formatDate(violation.created_at)}
+                      </span>
+                    </div>
+                    <code className="text-sm font-mono text-gray-700 block mb-1">
+                      {violation.method} {violation.endpoint}
+                    </code>
+                    <p className="text-sm text-gray-600">{violation.message}</p>
+                    {violation.path && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Path: <code className="bg-gray-100 px-1 rounded">{violation.path}</code>
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Integrations Header */}
-        <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">
-          Integrations
-        </h2>
+        {/* Usage Instructions */}
+        <div className="mt-8 bg-white rounded-2xl shadow-lg p-6">
+          <h3 className="text-xl font-bold mb-4">Quick Start</h3>
+          <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+            <pre className="text-sm text-gray-100">
+              <code>{`import { indi } from '@indi/runtime';
 
-        {/* Jira Integration */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
-              <Settings className="w-6 h-6 text-rose-500 mr-2" />
-              <h3 className="text-xl font-bold">Jira Integration</h3>
-            </div>
-            <span className={`px-3 py-1 rounded-full text-sm ${
-              jiraConfig.isConnected 
-                ? 'bg-green-100 text-green-700' 
-                : 'bg-gray-100 text-gray-700'
-            }`}>
-              {jiraConfig.isConnected ? 'Connected' : 'Not Connected'}
-            </span>
+indi.init({
+  apiKey: '${team?.api_key || 'your-api-key'}',
+  teamId: '${team?.id || 'your-team-id'}',
+});
+
+indi.watch('/api/users', { learningPeriod: 20 });
+indi.watch('/api/orders', { maxResponseTime: 500 });`}</code>
+            </pre>
           </div>
-
-          {jiraSaveMessage.text && (
-          <div className={`mb-4 p-3 rounded-lg text-sm flex items-center ${
-          jiraSaveMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-          }`}>
-          <AlertCircle className="w-4 h-4 mr-2" />
-          {jiraSaveMessage.text}
-          </div>
-        )}
-
-          <form className="space-y-4">
-            <div>
-              <label className="block text-gray-700 mb-2">Jira Domain</label>
-              <input
-                type="text"
-                placeholder="your-domain.atlassian.net"
-                value={jiraConfig.domain}
-                onChange={(e) => setJiraConfig({...jiraConfig, domain: e.target.value})}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 mb-2">Project Key</label>
-              <input
-                type="text"
-                placeholder="Your Jira Project Key"
-                value={jiraConfig.projectKey}
-                onChange={(e) => setJiraConfig({...jiraConfig, projectKey: e.target.value})}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 mb-2">API Token</label>
-              <input
-                type="password"
-                placeholder="Your Jira API Token"
-                value={jiraConfig.apiToken}
-                onChange={(e) => setJiraConfig({...jiraConfig, apiToken: e.target.value})}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 mb-2">Email</label>
-              <input
-                type="email"
-                placeholder="Email associated with your Jira account"
-                value={jiraConfig.email}
-                onChange={(e) => setJiraConfig({...jiraConfig, email: e.target.value})}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
-              />
-            </div>
-
-            <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-              <AlertCircle className="w-4 h-4" />
-              <span>Your credentials are encrypted and stored securely</span>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:opacity-90 transition-opacity"
-              onClick={(e) => {
-                e.preventDefault();
-                // Handle Jira configuration save logic here
-                setJiraConfig({...jiraConfig, isConnected: true});
-                saveJiraConfig(jiraConfig).then(() => {
-                  setJiraMessage({ type: 'success', text: 'Jira configuration updated successfully!' });
-                }).catch((error) => {
-                  console.error('Error saving Jira configuration:', error);
-                  setJiraMessage({ type: 'error', text: 'Failed to save Jira configuration' });
-                })
-              }}
-            >
-              Save Configuration
-            </button>
-          </form>
         </div>
-
-        {/* Slack Integration */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
-              <Settings className="w-6 h-6 text-rose-500 mr-2" />
-              <h3 className="text-xl font-bold">Slack Integration</h3>
-            </div>
-            <span className={`px-3 py-1 rounded-full text-sm ${
-              slackConfig.isConnected 
-                ? 'bg-green-100 text-green-700' 
-                : 'bg-gray-100 text-gray-700'
-            }`}>
-              {slackConfig.isConnected ? 'Connected' : 'Not Connected'}
-            </span>
-          </div>
-
-          <form className="space-y-4">
-            <div>
-              <label className="block text-gray-700 mb-2">Webhook URL</label>
-              <input
-                type="text"
-                placeholder="https://hooks.slack.com/services/..."
-                value={slackConfig.webhookUrl}
-                onChange={(e) => setSlackConfig({...slackConfig, webhookUrl: e.target.value})}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all"
-              />
-            </div>
-
-            <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-              <AlertCircle className="w-4 h-4" />
-              <span>Find your webhook URL in Slack App settings</span>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Save Configuration
-            </button>
-          </form>
-        </div>
-
-
-        {/* Allowed Domains */}
-        <DynamicDomainsForm />
-            {/* <div className="bg-white rounded-2xl shadow-lg p-6 mt-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold">Allowed Domains</h3>
-            <button
-
-              className="px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:opacity-90 transition-opacity">
-              Add Domain
-            </button>  
-            </div>
-          </div> */}
-
-
       </div>
-      
     </div>
   );
 };

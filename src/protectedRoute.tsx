@@ -1,20 +1,42 @@
-import { useState, useEffect } from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { useState, useEffect, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getSession, onAuthStateChange } from './supabase/auth';
+import type { User } from '@supabase/supabase-js';
 
-const ProtectedRoute = ({ children }: any) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+interface ProtectedRouteProps {
+  children: ReactNode;
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const auth = getAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user);
+    // Check existing session first (handles page refresh)
+    const checkSession = async () => {
+      const session = await getSession();
+      if (session?.user) {
+        setUser(session.user);
+      } else {
+        navigate('/login');
+      }
       setIsLoading(false);
+    };
+
+    checkSession();
+
+    // Then subscribe to future auth changes (handles sign-out, token refresh)
+    const { data: { subscription } } = onAuthStateChange((authUser) => {
+      if (!authUser) {
+        navigate('/login');
+      } else {
+        setUser(authUser);
+      }
     });
 
-    // ניקוי ה-listener כשהקומפוננטה מתפרקת
-    return () => unsubscribe();
-  }, [auth]);
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   if (isLoading) {
     return (
@@ -26,12 +48,11 @@ const ProtectedRoute = ({ children }: any) => {
     );
   }
 
-  if (!isAuthenticated) {
-    window.location.href = '/login';
+  if (!user) {
     return null;
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

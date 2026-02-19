@@ -233,18 +233,7 @@ export default function Home() {
   };
 
   const handleDownload = () => {
-    // Trigger download
-    const link = document.createElement('a');
-    link.href = '/indi-mapper.zip';
-    link.download = 'indi-mapper.zip';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    // Open guide page in new tab after short delay
-    setTimeout(() => {
-      window.open('/mapper-guide', '_blank');
-    }, 500);
+    window.open('https://chromewebstore.google.com/detail/indi-mapper-developer-too/fhjekmbfchnehkoplcpmdgeabgimgcna', '_blank');
   };
 
   return (
