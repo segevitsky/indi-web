@@ -1,6 +1,6 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSession, onAuthStateChange } from './supabase/auth';
+import { supabase } from './supabase/config';
 import type { User } from '@supabase/supabase-js';
 
 interface ProtectedRouteProps {
@@ -13,30 +13,30 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check existing session first (handles page refresh)
-    const checkSession = async () => {
-      const session = await getSession();
+    // Get initial session synchronously from cache, then verify
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
       } else {
         navigate('/login');
       }
       setIsLoading(false);
-    };
-
-    checkSession();
-
-    // Then subscribe to future auth changes (handles sign-out, token refresh)
-    const { data: { subscription } } = onAuthStateChange((authUser) => {
-      if (!authUser) {
-        navigate('/login');
-      } else {
-        setUser(authUser);
-      }
     });
 
+    // Listen for future auth changes (sign-out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+        } else if (!isLoading) {
+          navigate('/login');
+        }
+      }
+    );
+
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isLoading) {
     return (

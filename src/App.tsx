@@ -7,8 +7,7 @@ import RegisterForm from './Register';
 import PrivacyPolicy from './Policy';
 import TermsOfService from './TermsOfService';
 import MapperGuide from './MapperGuide';
-
-
+import Settings from './Settings';
 
 const App = () => {
   return (
@@ -25,6 +24,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />

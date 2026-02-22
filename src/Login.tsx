@@ -5,7 +5,7 @@ import {
   signInWithEmail,
   signUpWithEmail,
   signInWithGitHub,
-  signInWithGoogle,
+  // signInWithGoogle,
   getSession,
 } from './supabase/auth';
 
@@ -73,19 +73,19 @@ const LoginPage = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      const { error } = await signInWithGoogle();
-      if (error) throw error;
-      // OAuth will redirect, so no need to navigate
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      setLoading(false);
-    }
-  };
+  // const handleGoogleSignIn = async () => {
+  //   setError('');
+  //   setLoading(true);
+  //   try {
+  //     const { error } = await signInWithGoogle();
+  //     if (error) throw error;
+  //     // OAuth will redirect, so no need to navigate
+  //   } catch (err: unknown) {
+  //     const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+  //     setError(errorMessage);
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-pink-50 to-rose-50">
@@ -113,7 +113,7 @@ const LoginPage = () => {
             <span>Continue with GitHub</span>
           </button>
 
-          <button
+          {/* <button
             onClick={handleGoogleSignIn}
             disabled={loading}
             className="w-full py-3 px-4 flex items-center justify-center space-x-2 border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
@@ -137,7 +137,7 @@ const LoginPage = () => {
               />
             </svg>
             <span>Continue with Google</span>
-          </button>
+          </button> */}
         </div>
 
         <div className="relative my-6">

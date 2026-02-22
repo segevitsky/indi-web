@@ -24,6 +24,12 @@ export default function DownloadCTA() {
 
   return (
     <section id="download" className="min-h-screen bg-gray-50 dark:bg-black py-16 sm:py-20 md:py-24 px-4 relative overflow-hidden">
+      {/* Wavy Divider Top */}
+      <div className="absolute top-0 left-0 w-full overflow-hidden leading-none -translate-y-[1px]">
+        <svg className="relative block w-full h-12 sm:h-16" viewBox="0 0 1200 120" preserveAspectRatio="none">
+          <path d="M0,60 C200,0 400,120 600,60 C800,0 1000,120 1200,60 L1200,0 L0,0 Z" className="fill-white dark:fill-black" />
+        </svg>
+      </div>
       <div className="max-w-5xl mx-auto text-center relative z-10">
         {/* Header */}
         <div className="mb-8 sm:mb-12">
@@ -42,7 +48,7 @@ export default function DownloadCTA() {
         </div>
 
         {/* Main CTA Card */}
-        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-6 sm:p-8 md:p-12 border-2 sm:border-4 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 mb-8 sm:mb-12">
+        <div className="bg-white/70 dark:bg-gray-900 backdrop-blur-xl rounded-3xl shadow-2xl p-6 sm:p-8 md:p-12 border border-white/20 dark:border-gray-800 hover:border-purple-200/50 dark:hover:border-gray-700 transition-all duration-300 mb-8 sm:mb-12">
           {/* Chrome Icon */}
           <div className="flex justify-center mb-6 sm:mb-8">
             <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 rounded-full flex items-center justify-center shadow-2xl opacity-90">
@@ -97,7 +103,7 @@ export default function DownloadCTA() {
           ].map((feature, i) => (
             <div
               key={i}
-              className="p-5 sm:p-6 bg-white dark:bg-gray-900 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-gray-200 dark:border-gray-800 hover:scale-105 transform transition-all duration-300"
+              className="p-5 sm:p-6 bg-white/70 dark:bg-gray-900 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 dark:border-gray-800 hover:border-purple-200/50 hover:scale-105 transform transition-all duration-300"
             >
               <div className="text-3xl sm:text-4xl mb-2 sm:mb-3 opacity-80">{feature.icon}</div>
               <h4 className="font-headline font-bold text-lg sm:text-xl mb-1 sm:mb-2 text-black dark:text-white">{feature.title}</h4>

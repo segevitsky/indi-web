@@ -38,6 +38,17 @@ export interface Violation {
   created_at: string;
 }
 
+export interface NotificationSettings {
+  id: string;
+  team_id: string;
+  email: string;
+  frequency: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+  last_notified_at: string | null;
+}
+
 // Generate a random API key
 export function generateApiKey(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

@@ -61,7 +61,13 @@ export default function ContactUs() {
   };
   
   return (
-    <section id="contact" className="min-h-screen bg-gray-50 dark:bg-black py-24">
+    <section id="contact" className="min-h-screen bg-gray-50 dark:bg-black py-24 relative">
+    {/* Wavy Divider Top */}
+    <div className="absolute top-0 left-0 w-full overflow-hidden leading-none -translate-y-[1px]">
+      <svg className="relative block w-full h-12 sm:h-16" viewBox="0 0 1200 120" preserveAspectRatio="none">
+        <path d="M0,40 C150,100 350,0 500,60 C650,120 850,20 1000,80 C1100,40 1150,60 1200,40 L1200,0 L0,0 Z" className="fill-white dark:fill-black" />
+      </svg>
+    </div>
     <div className="container mx-auto px-6 max-w-2xl">
       <h2 className="text-4xl font-bold text-center mb-4 text-black dark:text-white">
         Get in Touch
@@ -71,12 +77,12 @@ export default function ContactUs() {
         <div className="w-2 h-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full opacity-90"></div>
         <div className={`w-16 h-1 ${darkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded-full`}></div>
       </div>
-      <form className="space-y-6">
+      <form className="space-y-6 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-white/20 dark:border-gray-800 shadow-xl">
         <div>
           <label className="block text-black dark:text-white mb-2 font-semibold">Name</label>
           <input
             type="text"
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-black dark:text-white focus:border-gray-400 dark:focus:border-gray-600 focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-800 outline-none transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200/50 dark:border-gray-700 bg-white/50 dark:bg-gray-900 backdrop-blur-sm text-black dark:text-white focus:border-purple-300 dark:focus:border-gray-600 focus:ring-2 focus:ring-purple-100 dark:focus:ring-gray-800 outline-none transition-all"
             placeholder="Your name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -86,7 +92,7 @@ export default function ContactUs() {
           <label className="block text-black dark:text-white mb-2 font-semibold">Email</label>
           <input
             type="email"
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-black dark:text-white focus:border-gray-400 dark:focus:border-gray-600 focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-800 outline-none transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200/50 dark:border-gray-700 bg-white/50 dark:bg-gray-900 backdrop-blur-sm text-black dark:text-white focus:border-purple-300 dark:focus:border-gray-600 focus:ring-2 focus:ring-purple-100 dark:focus:ring-gray-800 outline-none transition-all"
             placeholder="your@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -95,7 +101,7 @@ export default function ContactUs() {
         <div>
           <label className="block text-black dark:text-white mb-2 font-semibold">Message</label>
           <textarea
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-black dark:text-white focus:border-gray-400 dark:focus:border-gray-600 focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-800 outline-none transition-all h-32"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200/50 dark:border-gray-700 bg-white/50 dark:bg-gray-900 backdrop-blur-sm text-black dark:text-white focus:border-purple-300 dark:focus:border-gray-600 focus:ring-2 focus:ring-purple-100 dark:focus:ring-gray-800 outline-none transition-all h-32"
             placeholder="Your message"
             value={message}
             onChange={(e) => setMessage(e.target.value)}

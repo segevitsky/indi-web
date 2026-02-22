@@ -431,7 +431,7 @@ export default function Home() {
                       { text: 'Debug with built-in modals & security insights', color: 'bg-pink-500 shadow-pink-500/50' },
                       { text: 'Zero setup - works on any site', color: 'bg-yellow-500 shadow-yellow-500/50' }
                     ].map((item, i) => (
-                      <div key={i} className={`flex items-center gap-3 p-2 sm:p-3 rounded-xl ${darkMode ? 'bg-gray-900/50 border border-gray-800' : 'bg-white/50 border border-gray-200'} backdrop-blur-sm`}>
+                      <div key={i} className={`flex items-center gap-3 p-2 sm:p-3 rounded-xl ${darkMode ? 'bg-gray-900/50 border border-gray-800' : 'bg-white/70 border border-white/20'} backdrop-blur-xl`}>
                         <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full ${item.color} animate-pulse shadow-lg flex-shrink-0`} />
                         <p className={`text-xs sm:text-sm lg:text-base font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                           {item.text}
@@ -501,7 +501,7 @@ export default function Home() {
                   { emoji: '🔄', title: 'Polling', desc: 'Non-stop calls', borderColor: 'border-blue-500/60', indicatorColor: 'bg-blue-500 shadow-blue-500/50' },
                   { emoji: '📊', title: 'Schemas', desc: 'Validating now', borderColor: 'border-purple-500/60', indicatorColor: 'bg-purple-500 shadow-purple-500/50' },
                 ].map((item) => (
-                  <div key={item.title} className={`relative p-3 sm:p-4 rounded-xl ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} border-2 ${item.borderColor} shadow-xl transition-all hover:scale-105 ${slideEntered && currentSlide === 2 ? 'animate-fade-in' : 'opacity-0'}`}>
+                  <div key={item.title} className={`relative p-3 sm:p-4 rounded-xl ${darkMode ? 'bg-gray-900' : 'bg-white/70 backdrop-blur-xl'} border ${darkMode ? '' : 'border-white/20'} ${item.borderColor} shadow-xl transition-all hover:scale-105 ${slideEntered && currentSlide === 2 ? 'animate-fade-in' : 'opacity-0'}`}>
                     <div className={`absolute top-2 right-2 w-2 h-2 sm:w-3 sm:h-3 rounded-full ${item.indicatorColor} animate-pulse shadow-lg`} />
                     <div className="text-2xl sm:text-3xl mb-1 sm:mb-2">{item.emoji}</div>
                     <div className={`font-black text-xs sm:text-sm mb-0.5 ${darkMode ? 'text-white' : 'text-black'}`}>{item.title}</div>
@@ -550,7 +550,7 @@ export default function Home() {
 
 
 
-              <div className={`max-w-2xl mx-auto p-3 sm:p-8 rounded-3xl ${darkMode ? 'bg-gray-900 border-2 sm:border-4 border-gray-800' : 'bg-white border-2 sm:border-4 border-gray-200'} mb-3 sm:mb-6 shadow-xl ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
+              <div className={`max-w-2xl mx-auto p-3 sm:p-8 rounded-3xl ${darkMode ? 'bg-gray-900 border-2 sm:border-4 border-gray-800' : 'bg-white/70 backdrop-blur-xl border border-white/20'} mb-3 sm:mb-6 shadow-xl ${slideEntered && currentSlide === 3 ? 'animate-fade-in' : 'opacity-0'}`}>
                 <p className={`text-base sm:text-xl lg:text-2xl font-black mb-2 sm:mb-3 ${darkMode ? 'text-white' : 'text-black'}`}>
                   Record Clicks. Auto-Replay. 🔄
                 </p>
@@ -709,7 +709,7 @@ export default function Home() {
                 <div
                   key={i}
                   // add border white to dark mode
-                  className={`px-4 sm:px-6 py-2 sm:py-3 ${darkMode ? 'bg-gray-900 border-solid' : 'bg-gray-50 border-purple-300'} backdrop-blur-sm rounded-full shadow-lg border-2 font-sans font-medium text-sm sm:text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'} hover:scale-105 transform transition-all duration-300 hover:shadow-xl`}
+                  className={`px-4 sm:px-6 py-2 sm:py-3 ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white/70 border-white/20 hover:border-purple-200/50'} backdrop-blur-xl rounded-full shadow-lg border font-sans font-medium text-sm sm:text-base ${darkMode ? 'text-gray-300' : 'text-gray-700'} hover:scale-105 transform transition-all duration-300 hover:shadow-xl`}
                 >
                   {feature}
                 </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Layout,
   BellDot,
@@ -10,6 +10,7 @@ import {
   Activity,
   AlertTriangle,
   RefreshCw,
+  Settings,
 } from 'lucide-react';
 import { supabase, type Team, type Indicator, type Violation } from './supabase/config';
 import { signOut, getUser, getTeamForUser, createTeamForUser } from './supabase/auth';
@@ -163,6 +164,9 @@ const Dashboard = () => {
               <span className="ml-2 text-lg font-semibold text-gray-900">Dashboard</span>
             </div>
             <div className="flex items-center space-x-4">
+              <Link to="/settings" className="p-2 text-gray-500 hover:text-gray-700 transition-colors" title="Settings">
+                <Settings className="w-5 h-5" />
+              </Link>
               <BellDot className="w-5 h-5 text-gray-500 hover:text-gray-700 cursor-pointer" />
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center text-white text-sm font-medium">

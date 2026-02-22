@@ -19,7 +19,13 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className="bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 py-12 md:py-16 mt-16">
+    <footer className="bg-white dark:bg-black border-t border-white/20 dark:border-gray-800 py-12 md:py-16 mt-16 relative">
+      {/* Wavy Divider Top */}
+      <div className="absolute top-0 left-0 w-full overflow-hidden leading-none -translate-y-[1px]">
+        <svg className="relative block w-full h-12 sm:h-16" viewBox="0 0 1200 120" preserveAspectRatio="none">
+          <path d="M0,80 C300,20 600,100 900,40 C1050,10 1150,60 1200,80 L1200,0 L0,0 Z" className="fill-gray-50 dark:fill-black" />
+        </svg>
+      </div>
       <div className="container mx-auto px-4 sm:px-6">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">

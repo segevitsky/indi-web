@@ -40,7 +40,13 @@ export default function About() {
   ];
 
   return (
-    <section id="about" className="min-h-screen bg-white dark:bg-black py-16 sm:py-20 md:py-24">
+    <section id="about" className="min-h-screen bg-white dark:bg-black py-16 sm:py-20 md:py-24 relative">
+    {/* Wavy Divider Top */}
+    <div className="absolute top-0 left-0 w-full overflow-hidden leading-none -translate-y-[1px]">
+      <svg className="relative block w-full h-12 sm:h-16" viewBox="0 0 1200 120" preserveAspectRatio="none">
+        <path d="M0,60 C200,120 400,0 600,60 C800,120 1000,0 1200,60 L1200,0 L0,0 Z" className="fill-white dark:fill-black" />
+      </svg>
+    </div>
     <div className="container mx-auto px-4 sm:px-6">
       {/* Section Header */}
       <div className="text-center mb-12 sm:mb-16 md:mb-20">
@@ -64,7 +70,7 @@ export default function About() {
           return (
             <div
               key={index}
-              className="group p-6 sm:p-8 rounded-3xl bg-gray-50 dark:bg-gray-900 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 transform border-2 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
+              className="group p-6 sm:p-8 rounded-3xl bg-white/70 dark:bg-gray-900 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 transform border border-white/20 dark:border-gray-800 hover:border-purple-200/50 dark:hover:border-gray-700"
             >
               {/* Icon */}
               <div className={`w-14 h-14 sm:w-16 sm:h-16 mb-4 sm:mb-6 rounded-2xl bg-pink-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 opacity-90`}>

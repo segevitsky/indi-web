@@ -32,7 +32,7 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
   };
 
   return (
-    <nav className="fixed top-0 w-full bg-white/95 dark:bg-black/95 backdrop-blur-md z-[100] border-b border-gray-200 dark:border-gray-800">
+    <nav className="fixed top-0 w-full bg-white/70 dark:bg-black/95 backdrop-blur-xl z-[100] border-b border-white/20 dark:border-gray-800">
     <div className="container mx-auto px-6 py-4 flex items-center justify-between">
       {/* Logo */}
       <div className="flex items-center gap-2 sm:gap-3 group cursor-pointer">
