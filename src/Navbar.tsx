@@ -84,7 +84,13 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
             {label}
           </a>
         ))}
-        <a href="/runtime" onClick={(e) => { e.preventDefault(); navigate('/runtime'); }} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
+        <a href="/runtime" 
+          onClick={(e) => { 
+            e.preventDefault();
+             navigate('/runtime');
+             // lets make it scroll to top
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+          }} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
           Runtime SDK
         </a>
         <a
