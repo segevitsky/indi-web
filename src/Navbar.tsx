@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import IndiBlobLogo from "./IndiBlobLogo";
-import { Download, LayoutDashboard } from "lucide-react";
+import { Download, LayoutDashboard, Menu, X } from "lucide-react";
 
 export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode: boolean; setInScrollMode: (value: boolean) => void }) {
   const [darkMode, setDarkMode] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isHome = location.pathname === '/';
 
   console.log({ inScrollMode, setInScrollMode });
 
@@ -31,12 +36,31 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
     window.open('https://chromewebstore.google.com/detail/indi-mapper-developer-too/fhjekmbfchnehkoplcpmdgeabgimgcna', '_blank');
   };
 
+  const handleHashNav = (hash: string) => {
+    setMobileMenuOpen(false);
+    if (isHome) {
+      setInScrollMode(true);
+      document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate(`/#${hash}`);
+    }
+  };
+
   return (
     <nav className="fixed top-0 w-full bg-white/70 dark:bg-black/95 backdrop-blur-xl z-[100] border-b border-white/20 dark:border-gray-800">
     <div className="container mx-auto px-6 py-4 flex items-center justify-between">
       {/* Logo */}
-      <div className="flex items-center gap-2 sm:gap-3 group cursor-pointer">
-        <div className="w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center hover:scale-110 transition-transform duration-300">
+      <div className="flex items-center gap-2 sm:gap-3 group cursor-pointer" onClick={() => navigate('/')}>
+        <div
+          className="w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center hover:scale-110 transition-transform duration-300"
+          onClick={(e) => {
+            // On mobile, Blobi toggles dark mode instead of navigating
+            if (window.innerWidth < 768) {
+              e.stopPropagation();
+              toggleDarkMode();
+            }
+          }}
+        >
           <IndiBlobLogo size={40} />
         </div>
         <span className="font-headline font-bold text-lg sm:text-xl md:text-2xl text-black dark:text-white">
@@ -44,31 +68,48 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
         </span>
       </div>
 
-      {/* Navigation Links */}
+      {/* Navigation Links — Desktop */}
       <div className="hidden md:flex space-x-4 lg:space-x-8">
-        <a href="#home" onClick={() => setInScrollMode(true)} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
-          Home
+        {[
+          { label: 'Home', hash: 'home' },
+          { label: 'About', hash: 'about' },
+          { label: 'Download', hash: 'download' },
+        ].map(({ label, hash }) => (
+          <a
+            key={hash}
+            href={`/#${hash}`}
+            onClick={(e) => { e.preventDefault(); handleHashNav(hash); }}
+            className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform"
+          >
+            {label}
+          </a>
+        ))}
+        <a href="/runtime" onClick={(e) => { e.preventDefault(); navigate('/runtime'); }} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
+          Runtime SDK
         </a>
-        <a href="#about" onClick={() => setInScrollMode(true)} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
-          About
-        </a>
-        <a href="#download" onClick={() => setInScrollMode(true)} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
-          Download
-        </a>
-        <a href="#contact" onClick={() => setInScrollMode(true)} className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
+        <a
+          href="/#contact"
+          onClick={(e) => { e.preventDefault(); handleHashNav('contact'); }}
+          className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform"
+        >
           Contact
-        </a>
-        <a href="/login" className="font-sans font-medium text-sm lg:text-base text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200 hover:scale-105 transform">
-          Dashboard
         </a>
       </div>
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3">
-        {/* Dark Mode Toggle */}
+        {/* Hamburger — Mobile only */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 rounded-lg transition-all bg-white dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+        {/* Dark Mode Toggle — Desktop only (on mobile, tap Blobi instead) */}
         <button
           onClick={toggleDarkMode}
-          className="p-2 sm:p-3 rounded-full shadow-lg transition-all hover:scale-110 bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-700"
+          className="hidden md:flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full shadow-lg transition-all hover:scale-110 bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-700"
           aria-label="Toggle dark mode"
         >
           <span className="text-lg sm:text-2xl">{darkMode ? '☀️' : '🌙'}</span>
@@ -84,11 +125,75 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
 
         <button
           onClick={handleDownload}
-          className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 font-sans font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl hover:scale-105 transform transition-all duration-300 bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+          className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 font-sans font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl hover:scale-105 transform transition-all duration-300 bg-purple-600 hover:bg-purple-700 text-white"
         >
           <Download className="w-4 h-4" />
           Download
         </button>
+      </div>
+    </div>
+
+    {/* Mobile Menu — Full screen overlay */}
+    <div
+      className={`md:hidden fixed inset-0 top-0 h-screen bg-white dark:bg-black z-[-1] transition-all duration-500 ease-in-out ${
+        mobileMenuOpen
+          ? 'opacity-100 translate-y-0 pointer-events-auto'
+          : 'opacity-0 -translate-y-8 pointer-events-none'
+      }`}
+    >
+      <div className="flex flex-col items-center pt-28 space-y-6">
+        {[
+          { label: 'Home', hash: 'home' },
+          { label: 'About', hash: 'about' },
+          { label: 'Download', hash: 'download' },
+          { label: 'Contact', hash: 'contact' },
+        ].map(({ label, hash }, i) => (
+          <a
+            key={hash}
+            href={`/#${hash}`}
+            onClick={(e) => { e.preventDefault(); handleHashNav(hash); }}
+            className={`font-sans font-bold text-2xl text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-300 ${
+              mobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+            style={{ transitionDelay: mobileMenuOpen ? `${(i + 1) * 75}ms` : '0ms' }}
+          >
+            {label}
+          </a>
+        ))}
+        <a
+          href="/runtime"
+          onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/runtime'); }}
+          className={`font-sans font-bold text-2xl text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 transition-all duration-300 ${
+            mobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+          style={{ transitionDelay: mobileMenuOpen ? '375ms' : '0ms' }}
+        >
+          Runtime SDK
+        </a>
+        <a
+          href="/login"
+          onClick={() => setMobileMenuOpen(false)}
+          className={`font-sans font-bold text-2xl text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-300 ${
+            mobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+          style={{ transitionDelay: mobileMenuOpen ? '450ms' : '0ms' }}
+        >
+          Dashboard
+        </a>
+
+        <div
+          className={`pt-6 transition-all duration-300 ${
+            mobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+          style={{ transitionDelay: mobileMenuOpen ? '525ms' : '0ms' }}
+        >
+          <button
+            onClick={() => { setMobileMenuOpen(false); handleDownload(); }}
+            className="px-8 py-3 font-sans font-bold text-lg rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 transition-colors duration-200"
+          >
+            Download Extension
+          </button>
+        </div>
       </div>
     </div>
   </nav>

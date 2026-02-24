@@ -388,8 +388,26 @@ export default function Home() {
 
 
 
-              <div className={slideEntered && currentSlide === 0 ? 'animate-fade-in mb-4 sm:mb-6' : 'opacity-0 mb-4 sm:mb-6'}>
-              </div>
+              {/* Featured on Softonic */}
+              <a
+                href="https://indi-mapper-developer-tool.en.softonic.com/chrome/extension"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex flex-col items-center gap-2 px-8 sm:px-12 py-4 sm:py-6 rounded-2xl ${darkMode ? 'bg-gray-900/60 border border-gray-700/50 hover:border-gray-600' : 'bg-gray-50/80 border border-gray-200 hover:border-gray-300'} transition-all hover:scale-[1.02] group ${slideEntered && currentSlide === 0 ? 'animate-fade-in' : 'opacity-0'}`}
+              >
+                <span className={`text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                  Featured on
+                </span>
+                <svg viewBox="0 0 505 141" className={`h-8 sm:h-10 ${darkMode ? 'opacity-70 group-hover:opacity-100' : 'opacity-60 group-hover:opacity-80'} transition-opacity`}>
+                  <path d="M170.1 62c-7-2.8-10-4.4-10-8.5 0-1.7.4-2.8 1.5-3.6 1.8-1.6 5.3-2.4 10-2.4a50.1 50.1 0 0 1 9.1.8 4.1 4.1 0 0 0 4-3.4c.3-2.3-1.3-4.4-3.4-4.6a59 59 0 0 0-9.8-.9c-6.7 0-11.8 1.4-15.2 4.2a12.2 12.2 0 0 0-4.4 10c0 9.8 8.7 13.4 15 16h.2c7.5 3.2 11.8 5.3 11.8 11.5 0 2.7-.9 4.7-2.7 6a16 16 0 0 1-9.2 2.2c-3.5 0-7.3-.5-10.8-1.6l-1.2-.2a4 4 0 0 0-4 4.5c0 .5.2 1 .4 1.5a4.1 4.1 0 0 0 2.5 2c2.4.7 7.4 2 13 2 5.8 0 10.6-1.3 14.2-3.9a15 15 0 0 0 5.9-12.5c0-12-9.8-16-16.9-19Zm62.7-20c-4.8-2.7-10.2-2.7-12.8-2.7-2.6 0-8 0-12.8 2.7-6 3.3-9 9.7-9 18.7V76c0 9.1 3 15.4 9 18.8 4.8 2.7 10.2 2.7 12.8 2.7 2.6 0 8 0 12.9-2.7 6-3.4 9-9.7 9-18.8V60.7c0-9-3-15.4-9-18.7Zm1 18.7V76c0 11.1-5.3 13.4-13.8 13.4S206.2 87 206.2 76V60.7c0-11 5.3-13.3 13.8-13.3s13.8 2.3 13.8 13.3Zm127-18.7c-4.8-2.7-10.3-2.7-12.9-2.7-2.6 0-8 0-12.8 2.7-6 3.3-9 9.7-9 18.7V76c0 9.1 3 15.4 9 18.8a26 26 0 0 0 12.8 2.7c2.6 0 8 0 12.9-2.7 6-3.4 9-9.7 9-18.8V60.7c0-9-3-15.4-9-18.7Zm1 18.7V76c0 11.1-5.4 13.4-13.9 13.4S334.1 87 334.1 76V60.7c0-11 5.3-13.3 13.8-13.3s13.8 2.3 13.8 13.3ZM405 39.3a39.7 39.7 0 0 0-21.3 5.9c-1.5 1-1.4 2.7-1.4 2.7v45.5a4 4 0 0 0 4 4.1 4 4 0 0 0 4.2-4v-43H390.8c3.8-2 8.4-3 14.2-3 5.4 0 9.2 1.1 11.1 3.4 2 2 3 5.4 3 10v32.5a4 4 0 0 0 4 4.1 4 4 0 0 0 4-4V60.8a23 23 0 0 0-4.7-15.5c-3.7-4-9.5-6.1-17.4-6.1Zm38.5-19.1a5 5 0 0 0-5 5c0 2.9 2.2 5.2 5 5.2 2.9 0 5.3-2.3 5.3-5.2 0-2.7-2.4-5-5.3-5Zm0 19a4 4 0 0 0-4 4.2v50a4 4 0 0 0 4 4.1 4 4 0 0 0 4.2-4V43.3a4 4 0 0 0-4.2-4.1Zm59.2 50a4 4 0 0 0-5.2-2.2l-.2.1a35.1 35.1 0 0 1-11.5 1.8c-8.2 0-18-3.6-18-20.9 0-17.3 9.8-20.9 18-20.9a32.5 32.5 0 0 1 11.6 1.8 4 4 0 0 0 3.8-.3 4 4 0 0 0 1.5-1.8 4 4 0 0 0-.7-4.4 4 4 0 0 0-1.3-1c-.7-.3-6-2.4-15-2.4-4.2 0-10.5.8-16 4.7-6.7 4.9-10.1 13-10.1 24.3 0 11.2 3.4 19.4 10.2 24.3 5.4 4 11.7 4.7 16 4.7a43.5 43.5 0 0 0 15-2.5c1-.5 1.6-1.3 2-2.2.4-1 .4-2.2-.1-3.1Zm-189 .3-.6-.1c-3-.7-6.9-2.7-9.9-5.7-3.5-3.3-5.3-8.2-5.3-14.5V47.3h14.7a4 4 0 0 0 3.9-5.4 4.1 4.1 0 0 0-4-2.7h-14.6V20c0-2.9-3-5.2-6-3.6a4.4 4.4 0 0 0-2 3.9v19h-27c.6-4.1 2.2-7.5 4.8-10.1 3.5-3.4 8-4.7 11.1-5.2a4 4 0 0 0 3.8-4 4 4 0 0 0-4.1-4l-.3-.1c-4.3.6-10.9 2.4-16.1 7.5a27 27 0 0 0-7.7 19.8v50.1c0 2 1.3 3.7 3.2 4.1 2.6.5 5-1.4 5-4v-46h27.2v21.8a27 27 0 0 0 7.7 20.3c4.5 4.4 10 7 14.2 7.9 2.9.5 5.4-2 4.9-4.8a4.1 4.1 0 0 0-3-3.1Z" fill={darkMode ? '#ffffff' : '#53565A'}></path>
+                  <path d="m39.8 106-35-34.6a16.5 16.5 0 0 1 0-23.4L48.5 4.8c6.5-6.4 17-6.4 23.6 0l34.8 34.6-67 66.6Z" fill="#26D07C"></path>
+                  <path d="m14.2 106 30.4 30.2c6.6 6.4 17.1 6.4 23.7 0L111.7 93a16.5 16.5 0 0 0 0-23.4L81.3 39.4 14.2 106Z" fill="#00A3E0"></path>
+                  <path d="M106.8 39.4 94.1 52.1 81.3 39.4h25.5Z" fill="#005587"></path>
+                </svg>
+                <span className={`text-xs sm:text-sm font-medium italic max-w-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  "A Must-Have DevTool for Developers — 100/100 Security Score"
+                </span>
+              </a>
             </div>
           </div>
 
@@ -715,9 +733,57 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            {/* Featured On */}
+            <div className="mt-12 sm:mt-16 px-4">
+              <a
+                href="https://indi-mapper-developer-tool.en.softonic.com/chrome/extension"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex flex-col items-center gap-3 px-8 sm:px-12 py-5 sm:py-7 rounded-2xl ${darkMode ? 'bg-gray-900/60 border border-gray-700/50 hover:border-gray-600' : 'bg-gray-50/80 border border-gray-200 hover:border-gray-300'} transition-all hover:scale-[1.02] group`}
+              >
+                <span className={`text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                  Featured on
+                </span>
+                <svg viewBox="0 0 505 141" className={`h-8 sm:h-10 ${darkMode ? 'opacity-70 group-hover:opacity-100' : 'opacity-60 group-hover:opacity-80'} transition-opacity`}>
+                  <path d="M170.1 62c-7-2.8-10-4.4-10-8.5 0-1.7.4-2.8 1.5-3.6 1.8-1.6 5.3-2.4 10-2.4a50.1 50.1 0 0 1 9.1.8 4.1 4.1 0 0 0 4-3.4c.3-2.3-1.3-4.4-3.4-4.6a59 59 0 0 0-9.8-.9c-6.7 0-11.8 1.4-15.2 4.2a12.2 12.2 0 0 0-4.4 10c0 9.8 8.7 13.4 15 16h.2c7.5 3.2 11.8 5.3 11.8 11.5 0 2.7-.9 4.7-2.7 6a16 16 0 0 1-9.2 2.2c-3.5 0-7.3-.5-10.8-1.6l-1.2-.2a4 4 0 0 0-4 4.5c0 .5.2 1 .4 1.5a4.1 4.1 0 0 0 2.5 2c2.4.7 7.4 2 13 2 5.8 0 10.6-1.3 14.2-3.9a15 15 0 0 0 5.9-12.5c0-12-9.8-16-16.9-19Zm62.7-20c-4.8-2.7-10.2-2.7-12.8-2.7-2.6 0-8 0-12.8 2.7-6 3.3-9 9.7-9 18.7V76c0 9.1 3 15.4 9 18.8 4.8 2.7 10.2 2.7 12.8 2.7 2.6 0 8 0 12.9-2.7 6-3.4 9-9.7 9-18.8V60.7c0-9-3-15.4-9-18.7Zm1 18.7V76c0 11.1-5.3 13.4-13.8 13.4S206.2 87 206.2 76V60.7c0-11 5.3-13.3 13.8-13.3s13.8 2.3 13.8 13.3Zm127-18.7c-4.8-2.7-10.3-2.7-12.9-2.7-2.6 0-8 0-12.8 2.7-6 3.3-9 9.7-9 18.7V76c0 9.1 3 15.4 9 18.8a26 26 0 0 0 12.8 2.7c2.6 0 8 0 12.9-2.7 6-3.4 9-9.7 9-18.8V60.7c0-9-3-15.4-9-18.7Zm1 18.7V76c0 11.1-5.4 13.4-13.9 13.4S334.1 87 334.1 76V60.7c0-11 5.3-13.3 13.8-13.3s13.8 2.3 13.8 13.3ZM405 39.3a39.7 39.7 0 0 0-21.3 5.9c-1.5 1-1.4 2.7-1.4 2.7v45.5a4 4 0 0 0 4 4.1 4 4 0 0 0 4.2-4v-43H390.8c3.8-2 8.4-3 14.2-3 5.4 0 9.2 1.1 11.1 3.4 2 2 3 5.4 3 10v32.5a4 4 0 0 0 4 4.1 4 4 0 0 0 4-4V60.8a23 23 0 0 0-4.7-15.5c-3.7-4-9.5-6.1-17.4-6.1Zm38.5-19.1a5 5 0 0 0-5 5c0 2.9 2.2 5.2 5 5.2 2.9 0 5.3-2.3 5.3-5.2 0-2.7-2.4-5-5.3-5Zm0 19a4 4 0 0 0-4 4.2v50a4 4 0 0 0 4 4.1 4 4 0 0 0 4.2-4V43.3a4 4 0 0 0-4.2-4.1Zm59.2 50a4 4 0 0 0-5.2-2.2l-.2.1a35.1 35.1 0 0 1-11.5 1.8c-8.2 0-18-3.6-18-20.9 0-17.3 9.8-20.9 18-20.9a32.5 32.5 0 0 1 11.6 1.8 4 4 0 0 0 3.8-.3 4 4 0 0 0 1.5-1.8 4 4 0 0 0-.7-4.4 4 4 0 0 0-1.3-1c-.7-.3-6-2.4-15-2.4-4.2 0-10.5.8-16 4.7-6.7 4.9-10.1 13-10.1 24.3 0 11.2 3.4 19.4 10.2 24.3 5.4 4 11.7 4.7 16 4.7a43.5 43.5 0 0 0 15-2.5c1-.5 1.6-1.3 2-2.2.4-1 .4-2.2-.1-3.1Zm-189 .3-.6-.1c-3-.7-6.9-2.7-9.9-5.7-3.5-3.3-5.3-8.2-5.3-14.5V47.3h14.7a4 4 0 0 0 3.9-5.4 4.1 4.1 0 0 0-4-2.7h-14.6V20c0-2.9-3-5.2-6-3.6a4.4 4.4 0 0 0-2 3.9v19h-27c.6-4.1 2.2-7.5 4.8-10.1 3.5-3.4 8-4.7 11.1-5.2a4 4 0 0 0 3.8-4 4 4 0 0 0-4.1-4l-.3-.1c-4.3.6-10.9 2.4-16.1 7.5a27 27 0 0 0-7.7 19.8v50.1c0 2 1.3 3.7 3.2 4.1 2.6.5 5-1.4 5-4v-46h27.2v21.8a27 27 0 0 0 7.7 20.3c4.5 4.4 10 7 14.2 7.9 2.9.5 5.4-2 4.9-4.8a4.1 4.1 0 0 0-3-3.1Z" fill={darkMode ? '#ffffff' : '#53565A'}></path>
+                  <path d="m39.8 106-35-34.6a16.5 16.5 0 0 1 0-23.4L48.5 4.8c6.5-6.4 17-6.4 23.6 0l34.8 34.6-67 66.6Z" fill="#26D07C"></path>
+                  <path d="m14.2 106 30.4 30.2c6.6 6.4 17.1 6.4 23.7 0L111.7 93a16.5 16.5 0 0 0 0-23.4L81.3 39.4 14.2 106Z" fill="#00A3E0"></path>
+                  <path d="M106.8 39.4 94.1 52.1 81.3 39.4h25.5Z" fill="#005587"></path>
+                </svg>
+                <span className={`text-sm sm:text-base font-medium italic max-w-md ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  "A Must-Have DevTool for Developers — 100/100 Security Score"
+                </span>
+              </a>
+            </div>
           </div>
         </section>
         <About />
+
+        {/* Runtime SDK Teaser */}
+        <section className={`py-16 sm:py-20 px-4 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Blobi emotion="calm" size={50} />
+            </div>
+            <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-black mb-3 ${darkMode ? 'text-white' : 'text-black'}`}>
+              Now in Production Too
+            </h2>
+            <p className={`text-sm sm:text-base font-bold mb-6 max-w-xl mx-auto ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              The new Indi Runtime SDK monitors your API contracts in production — auto-learning schemas, catching drift, and alerting you before users notice.
+            </p>
+            <a
+              href="/runtime"
+              className="inline-flex items-center gap-2 px-6 py-3 font-bold text-sm sm:text-base bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full hover:scale-105 transform transition-all duration-300 shadow-lg"
+            >
+              Explore Runtime SDK
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </a>
+          </div>
+        </section>
+
         <DownloadCTA />
         <ContactUs />
         <Footer />

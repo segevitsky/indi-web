@@ -8,6 +8,7 @@ import PrivacyPolicy from './Policy';
 import TermsOfService from './TermsOfService';
 import MapperGuide from './MapperGuide';
 import Settings from './Settings';
+import RuntimeSDK from './RuntimeSDK';
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/mapper-guide" element={<MapperGuide />} />
+        <Route path="/runtime" element={<RuntimeSDK />} />
         <Route
           path="/dashboard"
           element={
