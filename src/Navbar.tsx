@@ -63,7 +63,7 @@ export default function Navbar({ inScrollMode, setInScrollMode }: { inScrollMode
         >
           <IndiBlobLogo size={40} />
         </div>
-        <span className="font-headline font-bold text-lg sm:text-xl md:text-2xl text-black dark:text-white">
+        <span className="hidden md:block font-headline font-bold text-lg sm:text-xl md:text-2xl text-black dark:text-white">
           Indi Mapper
         </span>
       </div>
