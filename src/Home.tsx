@@ -675,7 +675,7 @@ export default function Home() {
 
           <div className="container mx-auto px-4 sm:px-6 text-center relative z-10 pt-16 sm:pt-20">
             {/* Existing home section content */}
-            <div className="mb-6 sm:mb-8 animate-fade-in">
+            <div className="mt-8 mb-6 sm:mb-8 animate-fade-in">
               <h1 className={`font-headline font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl mb-4 ${darkMode ? 'text-white' : 'text-black'} drop-shadow-lg px-2`}>
                 <span className="inline-flex items-center justify-center">
                   <span>Indi Mapper</span>
