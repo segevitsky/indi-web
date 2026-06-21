@@ -20,6 +20,7 @@ export interface Indicator {
   method: string;
   schema: Record<string, unknown> | null;
   thresholds: Record<string, unknown> | null;
+  relearn_requested: boolean;
   created_at: string;
 }
 

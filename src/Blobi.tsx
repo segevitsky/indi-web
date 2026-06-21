@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-export type EmotionType = 'happy' | 'calm' | 'worried' | 'panic' | 'muted';
+export type EmotionType = 'happy' | 'calm' | 'worried' | 'panic' | 'muted' | 'pink';
 
 interface BlobColors {
   primary: string;
@@ -22,6 +22,7 @@ const emotionColors: Record<Exclude<EmotionType, 'muted'>, BlobColors> = {
   calm: { primary: '#60a5fa', secondary: '#3b82f6', tertiary: '#2563eb' },
   worried: { primary: '#fbbf24', secondary: '#f59e0b', tertiary: '#d97706' },
   panic: { primary: '#f87171', secondary: '#ef4444', tertiary: '#dc2626' },
+  pink: { primary: '#f9a8d4', secondary: '#ec4899', tertiary: '#db2777' },
 };
 
 const mouthShapes: Record<Exclude<EmotionType, 'muted'>, string> = {
@@ -29,6 +30,7 @@ const mouthShapes: Record<Exclude<EmotionType, 'muted'>, string> = {
   calm: 'M40,65 L60,65',
   worried: 'M35,68 Q50,65 65,68',
   panic: 'M40,62 Q50,68 60,62',
+  pink: 'M35,62 Q50,70 65,62',
 };
 
 export default function Blobi({
@@ -79,8 +81,8 @@ export default function Blobi({
   }, [animate]);
 
   const distance = Math.sqrt(mousePos.x ** 2 + mousePos.y ** 2);
-  const maxMove = 4;
-  const scale = Math.min(maxMove / (distance / 60), 1);
+  const maxMove = 8;
+  const scale = Math.min(maxMove / (distance / 80), 1);
   const irisX = animate ? (mousePos.x / distance) * maxMove * scale : 0;
   const irisY = animate ? (mousePos.y / distance) * maxMove * scale : 0;
 
@@ -96,6 +98,7 @@ export default function Blobi({
     >
       {/* Hero glow */}
       <div
+        data-blobi-glow
         className="absolute inset-0 rounded-full"
         style={{
           background: `radial-gradient(circle, ${colors.primary}60, transparent 70%)`,
@@ -107,6 +110,7 @@ export default function Blobi({
 
       {/* Shadow */}
       <div
+        data-blobi-glow
         className="absolute bottom-0 left-1/2 -translate-x-1/2 -z-10"
         style={{
           width: '80%',
@@ -176,7 +180,7 @@ export default function Blobi({
         </div>
 
         {/* Badge */}
-        <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full border-2 border-white shadow-lg opacity-80" />
+        <div data-blobi-glow className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full border-2 border-white shadow-lg opacity-80" />
       </div>
 
       <style>{`

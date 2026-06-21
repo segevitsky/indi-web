@@ -10,6 +10,7 @@ import {
   Activity,
   AlertTriangle,
   RefreshCw,
+  RotateCcw,
   Settings,
 } from 'lucide-react';
 import { supabase, type Team, type Indicator, type Violation } from './supabase/config';
@@ -97,6 +98,32 @@ const Dashboard = () => {
       supabase.removeChannel(channel);
     };
   }, [team]);
+
+  const [relearningIds, setRelearningIds] = useState<Set<string>>(new Set());
+
+  const handleRelearn = async (indicatorId: string) => {
+    setRelearningIds((prev) => new Set(prev).add(indicatorId));
+
+    const { error } = await supabase
+      .from('indicators')
+      .update({ relearn_requested: true })
+      .eq('id', indicatorId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to request re-learn:', error);
+    }
+
+    // Brief visual feedback, then reset
+    setTimeout(() => {
+      setRelearningIds((prev) => {
+        const next = new Set(prev);
+        next.delete(indicatorId);
+        return next;
+      });
+    }, 2000);
+  };
 
   const handleCopyApiKey = () => {
     if (team?.api_key) {
@@ -263,7 +290,7 @@ const Dashboard = () => {
                     key={indicator.id}
                     className="p-3 bg-gray-50 rounded-lg flex items-center justify-between"
                   >
-                    <div>
+                    <div className="flex items-center">
                       <code className="text-sm font-mono text-gray-800">
                         {indicator.endpoint}
                       </code>
@@ -271,9 +298,24 @@ const Dashboard = () => {
                         {indicator.method}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-400">
-                      {formatDate(indicator.created_at)}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleRelearn(indicator.id)}
+                        disabled={relearningIds.has(indicator.id)}
+                        className={`flex items-center space-x-1 px-2 py-1 text-xs rounded transition-colors ${
+                          relearningIds.has(indicator.id)
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-rose-50 text-rose-600 hover:bg-rose-100'
+                        }`}
+                        title={relearningIds.has(indicator.id) ? 'Re-learning in progress' : 'Re-learn schema'}
+                      >
+                        <RotateCcw className={`w-3 h-3 ${relearningIds.has(indicator.id) ? 'animate-spin' : ''}`} />
+                        <span>{relearningIds.has(indicator.id) ? 'Re-learning...' : 'Re-learn'}</span>
+                      </button>
+                      <span className="text-xs text-gray-400">
+                        {formatDate(indicator.created_at)}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -35,6 +35,7 @@ const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,11 +47,13 @@ const LoginPage = () => {
       if (isLogin) {
         const { error } = await signInWithEmail(email, password);
         if (error) throw error;
+        navigate('/dashboard');
       } else {
         const { error } = await signUpWithEmail(email, password);
         if (error) throw error;
+        setConfirmEmail(true);
+        return;
       }
-      navigate('/dashboard');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
@@ -86,6 +89,36 @@ const LoginPage = () => {
   //     setLoading(false);
   //   }
   // };
+
+  if (confirmEmail) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-pink-50 to-rose-50">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#ff8177] to-[#b12a5b] opacity-5" />
+        <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl relative z-10 text-center">
+          <div className="text-5xl mb-4">📬</div>
+          <h2 className="text-2xl font-bold mb-3 bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">
+            Check your email
+          </h2>
+          <p className="text-gray-600 mb-2">
+            We sent a confirmation link to
+          </p>
+          <p className="font-semibold text-gray-800 mb-6">{email}</p>
+          <p className="text-sm text-gray-500 mb-6">
+            Click the link in the email to verify your account, then come back and sign in.
+          </p>
+          <button
+            onClick={() => {
+              setConfirmEmail(false);
+              setIsLogin(true);
+            }}
+            className="text-rose-500 hover:text-rose-600 font-medium"
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-pink-50 to-rose-50">

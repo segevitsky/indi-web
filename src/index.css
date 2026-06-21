@@ -64,3 +64,135 @@
   .animate-slide-in-right { animation: slide-in-right 0.5s ease-out forwards; }
   .animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
   .animate-bounce-in { animation: bounce-in 0.6s ease-out forwards; }
+
+  /* ═══ Retro Arcade Theme ═══ */
+
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  .font-arcade {
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  /* Deep space background */
+  .arcade-bg {
+    background: #0a0a1a;
+    position: relative;
+  }
+
+  /* Pixel grid overlay */
+  .arcade-grid-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      linear-gradient(rgba(124, 58, 237, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124, 58, 237, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Scanline overlay */
+  .arcade-scanlines {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.08) 2px,
+      rgba(0, 0, 0, 0.08) 4px
+    );
+  }
+
+  /* Neon glow text */
+  .arcade-neon-purple {
+    color: #c084fc;
+    text-shadow:
+      0 0 7px rgba(192, 132, 252, 0.6),
+      0 0 20px rgba(124, 58, 237, 0.4),
+      0 0 40px rgba(124, 58, 237, 0.2);
+  }
+  .arcade-neon-cyan {
+    color: #22d3ee;
+    text-shadow:
+      0 0 7px rgba(34, 211, 238, 0.6),
+      0 0 20px rgba(6, 182, 212, 0.4),
+      0 0 40px rgba(6, 182, 212, 0.2);
+  }
+  .arcade-neon-magenta {
+    color: #f472b6;
+    text-shadow:
+      0 0 7px rgba(244, 114, 182, 0.6),
+      0 0 20px rgba(236, 72, 153, 0.4),
+      0 0 40px rgba(236, 72, 153, 0.2);
+  }
+
+  /* Pulsing neon animation */
+  @keyframes arcade-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  .arcade-pulse {
+    animation: arcade-pulse 2s ease-in-out infinite;
+  }
+
+  /* Terminal CRT effect */
+  .arcade-terminal {
+    background: #0c1a0c;
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.1), inset 0 0 60px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Kill blur/glow inside Blobi when it's being scaled for the zoom effect */
+  .arcade-zoom-blobi * {
+    filter: none !important;
+    box-shadow: none !important;
+  }
+  /* Hide the hero glow, shadow, and badge when zoomed — they're massive at 25x */
+  .arcade-zoom-blobi [data-blobi-glow] {
+    opacity: 0 !important;
+  }
+  /* Keep the eye white bg and sharp border when zoomed */
+  .arcade-zoom-blobi .rounded-full.bg-white {
+    border-width: 2px !important;
+    border-color: rgba(200, 200, 200, 0.5) !important;
+  }
+
+  /* Arcade button hover */
+  .arcade-btn {
+    position: relative;
+    transition: all 0.3s;
+  }
+  .arcade-btn:hover {
+    transform: translateY(-2px);
+  }
+  .arcade-btn:active {
+    transform: translateY(1px);
+  }
+
+  /* Card glow effects — Extension */
+  .arcade-card-extension {
+    transform: rotate(-1deg);
+    box-shadow: 8px 8px 0px rgba(139, 92, 246, 0.3), 12px 12px 20px rgba(0, 0, 0, 0.5);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+  }
+  .arcade-card-extension:hover {
+    transform: rotate(-1deg) translateY(-8px) scale(1.03);
+    border-color: rgba(168, 85, 247, 0.9);
+    box-shadow:
+      0 0 25px rgba(139, 92, 246, 0.5),
+      0 0 60px rgba(139, 92, 246, 0.2),
+      0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Card glow effects — Runtime */
+  .arcade-card-runtime {
+    transform: rotate(1deg);
+    box-shadow: 8px 8px 0px rgba(34, 197, 94, 0.2), 12px 12px 20px rgba(0, 0, 0, 0.5);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+  }
+  .arcade-card-runtime:hover {
+    transform: rotate(1deg) translateY(-8px) scale(1.03);
+    border-color: rgba(74, 222, 128, 0.9);
+    box-shadow:
+      0 0 25px rgba(34, 197, 94, 0.5),
+      0 0 60px rgba(34, 197, 94, 0.2),
+      0 20px 40px rgba(0, 0, 0, 0.4);
+  }

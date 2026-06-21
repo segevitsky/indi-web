@@ -16,7 +16,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     // Get initial session synchronously from cache, then verify
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        setUser(session.user);
+        // Block unverified email users (OAuth users are auto-verified)
+        if (!session.user.email_confirmed_at) {
+          navigate('/login');
+        } else {
+          setUser(session.user);
+        }
       } else {
         navigate('/login');
       }

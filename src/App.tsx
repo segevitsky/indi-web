@@ -9,12 +9,16 @@ import TermsOfService from './TermsOfService';
 import MapperGuide from './MapperGuide';
 import Settings from './Settings';
 import RuntimeSDK from './RuntimeSDK';
+import HomeArcade from './HomeArcade';
+import ReactNext from './ReactNext';
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/arcade" element={<HomeArcade />} />
+        <Route path="/reactnext" element={<ReactNext />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
