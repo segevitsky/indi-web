@@ -3,13 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-// Type-only imports are erased at compile time — safe across the api/↔src/ boundary.
-// Runtime imports are not: package.json's "type": "module" means Vercel's Node runtime
-// uses native ESM here, which doesn't reliably resolve a relative import into src/, so
-// this function stays self-contained instead of importing src/supabase/config at runtime.
-import type { Insights } from '../src/insights/types';
-import type { JourneysResult } from '../src/journeys/types';
 
+// This function is fully self-contained (no imports from src/): package.json's
+// "type": "module" makes Vercel's build enforce node16/nodenext module resolution here,
+// which requires explicit .js extensions on every relative import — including type-only
+// ones. Simplest fix is no relative imports at all. insights/journeys pass through to
+// Claude and Supabase's jsonb column untouched, so this function doesn't need their shape.
 const supabaseUrl = 'https://odgbuevicaklqygbykos.supabase.co';
 const supabaseAnonKey = 'sb_publishable_iBPK_t8lnmU4bFbwMxUQZw_6dhM6N21';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -62,8 +61,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { teamId, insights, journeys } = (req.body ?? {}) as {
     teamId?: string;
-    insights?: Insights;
-    journeys?: JourneysResult;
+    insights?: Record<string, unknown>;
+    journeys?: Record<string, unknown>;
   };
 
   if (!teamId || !insights || !journeys) {
