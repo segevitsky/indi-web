@@ -16,6 +16,7 @@ import {
   Zap,
   GitBranch,
   Sparkles,
+  HelpCircle,
 } from 'lucide-react';
 import { supabase, type Team, type Indicator, type Violation } from './supabase/config';
 import { signOut, getUser, getTeamForUser, createTeamForUser } from './supabase/auth';
@@ -62,6 +63,26 @@ const SEVERITY_COLOR: Record<RecommendationItem['severity'], string> = {
   high: 'bg-red-900 text-red-300',
   medium: 'bg-yellow-900 text-yellow-300',
   low: 'bg-gray-800 text-gray-300',
+};
+
+const SectionHelp: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative ml-auto">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="text-gray-500 hover:text-gray-300 transition-colors"
+        aria-label="How to read this section"
+      >
+        <HelpCircle className="w-4 h-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-6 z-10 w-80 bg-gray-800 border border-gray-700 rounded-lg p-4 text-xs text-gray-300 shadow-xl space-y-2">
+          {children}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const KpiCard: React.FC<{ label: string; value: string; sublabel: string }> = ({ label, value, sublabel }) => (
@@ -175,6 +196,21 @@ const AIRecommendationsSection: React.FC<{ recommendations: RecommendationItem[]
     <div className="flex items-center gap-2 mb-6">
       <Sparkles className="w-5 h-5 text-indi-purple-400" />
       <h3 className="text-lg font-bold text-white">AI Recommendations</h3>
+      <SectionHelp>
+        <p>
+          <strong className="text-gray-100">Duplicate calls</strong> — the exact same request happening
+          again within 1 second (a double-click, a re-render, or a race condition), not a caching check.
+        </p>
+        <p>
+          <strong className="text-gray-100">avgCallsPerSession</strong> — how many times a single user
+          calls that endpoint during one visit, on average. Above 1 means the same request is repeated
+          within a session, even if each call is a second or more apart.
+        </p>
+        <p>
+          <strong className="text-gray-100">Dollar estimates</strong> are always your Monthly Infra Cost
+          (set in Settings) x that item's share of measured waste — never a guess.
+        </p>
+      </SectionHelp>
     </div>
     <div className="space-y-3">
       {recommendations.map((r, i) => (
@@ -314,6 +350,21 @@ const JourneysSection: React.FC<{ journeys: JourneysResult }> = ({ journeys }) =
     <div className="flex items-center gap-2 mb-6">
       <GitBranch className="w-5 h-5 text-teal-400" />
       <h3 className="text-lg font-bold text-white">Journeys</h3>
+      <SectionHelp>
+        <p>
+          Each flow is a sequence of API calls made during real user sessions, most frequent first.
+          The bar under each step shows what % of sessions reached it, relative to the first step.
+        </p>
+        <p>
+          <strong className="text-gray-100">Drop-off</strong> (red) marks the step where the biggest
+          share of sessions stopped continuing the flow.
+        </p>
+        <p>
+          A <strong className="text-gray-100">yellow line</strong> means that endpoint is called more
+          than once per session on average within that flow — likely a redundant re-fetch, not a
+          single, necessary call.
+        </p>
+      </SectionHelp>
     </div>
     {journeys.flows.length === 0 ? (
       <p className="text-sm text-gray-500">Not enough session data in the last 24h to mine journeys yet.</p>
