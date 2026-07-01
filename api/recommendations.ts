@@ -3,9 +3,16 @@ import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { supabase, supabaseUrl, supabaseAnonKey } from '../src/supabase/config';
+// Type-only imports are erased at compile time — safe across the api/↔src/ boundary.
+// Runtime imports are not: package.json's "type": "module" means Vercel's Node runtime
+// uses native ESM here, which doesn't reliably resolve a relative import into src/, so
+// this function stays self-contained instead of importing src/supabase/config at runtime.
 import type { Insights } from '../src/insights/types';
 import type { JourneysResult } from '../src/journeys/types';
+
+const supabaseUrl = 'https://odgbuevicaklqygbykos.supabase.co';
+const supabaseAnonKey = 'sb_publishable_iBPK_t8lnmU4bFbwMxUQZw_6dhM6N21';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /** How long a cached recommendation set is served before calling Claude again.
  * This also doubles as the rate limit on real Claude calls per team. */
