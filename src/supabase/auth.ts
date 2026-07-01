@@ -9,10 +9,15 @@ export interface AuthState {
 }
 
 // Sign up with email/password and create team
-export async function signUpWithEmail(email: string, password: string): Promise<{ user: User | null; error: AuthError | null }> {
+export async function signUpWithEmail(
+  email: string,
+  password: string,
+  metadata?: Record<string, unknown>
+): Promise<{ user: User | null; error: AuthError | null }> {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: metadata ? { data: metadata } : undefined,
   });
 
   if (error) {

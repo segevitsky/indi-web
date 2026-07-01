@@ -1,0 +1,89 @@
+/**
+ * Flat, values-free row read from Supabase per endpoint per flush window.
+ * Mirrors indi-runtime's EndpointStatsRow (src/analytics/types.ts) plus the
+ * columns Postgres adds (id, created_at).
+ */
+export interface EndpointStatsRow {
+  id: string;
+  team_id: string | null;
+  endpoint: string;
+  method: string;
+  window_start: number;
+  window_end: number;
+  call_count: number;
+  status_2xx: number;
+  status_3xx: number;
+  status_4xx: number;
+  status_5xx: number;
+  status_other: number;
+  latency_buckets: number[];
+  latency_sum: number;
+  latency_max: number;
+  duplicate_count: number;
+  field_presence: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface SequenceEvent {
+  step: string;
+  method: string;
+  status: number;
+  tOffsetMs: number;
+  durMs: number;
+}
+
+export interface FlowTag {
+  name: string;
+  matched: boolean;
+  converted: boolean;
+}
+
+/** Row read from `session_traces`. Not consumed yet — added for M2's journey mining. */
+export interface SessionTraceRow {
+  id: string;
+  team_id: string | null;
+  session_id: string;
+  started_at: number;
+  ended_at: number;
+  events: SequenceEvent[];
+  flow_tags: FlowTag[] | null;
+  status_summary: Record<string, number> | null;
+  created_at: string;
+}
+
+export interface Kpis {
+  totalCallsPerDay: number;
+  errorRate: number;
+  healthScore: number;
+  wasteRatio: number;
+}
+
+export interface EndpointInsight {
+  endpoint: string;
+  method: string;
+  callCount: number;
+  errorRate: number;
+  p50: number;
+  p95: number;
+  p99: number;
+  duplicateCount: number;
+}
+
+export interface WasteSignals {
+  duplicateCalls: number;
+  errorRetryVolume: number;
+  slowEndpointVolume: number;
+}
+
+export interface MoneyInsights {
+  wasteRatio: number;
+  monthlySavings: number;
+}
+
+export interface Insights {
+  kpis: Kpis;
+  endpoints: EndpointInsight[];
+  waste: WasteSignals;
+  money: MoneyInsights;
+  violationCount: number;
+}

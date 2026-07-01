@@ -15,6 +15,7 @@ interface BlobiProps {
   animate?: boolean;
   rollIn?: boolean;
   showZipper?: boolean;
+  showBadge?: boolean;
 }
 
 const emotionColors: Record<Exclude<EmotionType, 'muted'>, BlobColors> = {
@@ -40,6 +41,7 @@ export default function Blobi({
   animate = true,
   rollIn = false,
   showZipper = false,
+  showBadge = true,
 }: BlobiProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const irisRef = useRef<HTMLDivElement>(null);
@@ -180,7 +182,9 @@ export default function Blobi({
         </div>
 
         {/* Badge */}
-        <div data-blobi-glow className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full border-2 border-white shadow-lg opacity-80" />
+        {showBadge && (
+          <div data-blobi-glow className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full border-2 border-white shadow-lg opacity-80" />
+        )}
       </div>
 
       <style>{`

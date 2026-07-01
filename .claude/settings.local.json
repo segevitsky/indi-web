@@ -3,7 +3,10 @@
     "allow": [
       "Bash(dir:*)",
       "Bash(tail:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git *)",
+      "Bash(npm uninstall *)",
+      "Bash(npx supabase *)"
     ]
   }
 }
