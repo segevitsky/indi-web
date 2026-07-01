@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://odgbuevicaklqygbykos.supabase.co';
-const supabaseAnonKey = 'sb_publishable_iBPK_t8lnmU4bFbwMxUQZw_6dhM6N21';
+export const supabaseUrl = 'https://odgbuevicaklqygbykos.supabase.co';
+export const supabaseAnonKey = 'sb_publishable_iBPK_t8lnmU4bFbwMxUQZw_6dhM6N21';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -11,6 +11,7 @@ export interface Team {
   name: string;
   api_key: string;
   created_at: string;
+  infra_cost_per_month: number | null;
 }
 
 export interface Indicator {
