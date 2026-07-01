@@ -297,6 +297,15 @@ const JourneyCard: React.FC<{ journey: JourneyFlow }> = ({ journey }) => (
       )}
     </p>
     <FunnelBar funnel={journey.funnel} />
+    {journey.repeatedSteps.length > 0 && (
+      <div className="mt-3 space-y-1">
+        {journey.repeatedSteps.map((r) => (
+          <p key={r.step} className="text-xs text-yellow-400">
+            <code>{r.step}</code> called {r.avgCallsPerSession.toFixed(1)}x per session &mdash; likely redundant within this journey
+          </p>
+        ))}
+      </div>
+    )}
   </div>
 );
 

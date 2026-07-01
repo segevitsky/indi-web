@@ -7,6 +7,7 @@ import type {
   JourneysResult,
   MergedSession,
   MinedFlow,
+  RepeatedStep,
   SessionTraceRow,
 } from './types';
 
@@ -266,6 +267,25 @@ export function computeCostAndPerf(
   return { estimatedMonthlyCost, violationCount, avgDurationMs };
 }
 
+/** Steps a session calls more than once, on average, while walking this flow — the
+ * within-session redundancy signal, distinct from insights' same-second duplicate count. */
+export function computeRepeatedSteps(flow: MinedFlow, sessions: MergedSession[]): RepeatedStep[] {
+  if (flow.steps.length === 0) return [];
+  const matchingSessions = sessions.filter((s) => isOrderedSubsequence(flow.steps, s.steps));
+  if (matchingSessions.length === 0) return [];
+
+  return Array.from(new Set(flow.steps))
+    .map((step) => {
+      const totalCalls = matchingSessions.reduce(
+        (sum, s) => sum + s.steps.filter((st) => st === step).length,
+        0
+      );
+      return { step, totalCalls, avgCallsPerSession: totalCalls / matchingSessions.length };
+    })
+    .filter((s) => s.avgCallsPerSession > 1)
+    .sort((a, b) => b.avgCallsPerSession - a.avgCallsPerSession);
+}
+
 export function mineJourneys(
   sessionTraces: SessionTraceRow[],
   violations: Violation[],
@@ -280,6 +300,7 @@ export function mineJourneys(
     funnel: buildFunnel(flow, sessions),
     conversion: computeConversion(flow, sessions),
     costAndPerf: computeCostAndPerf(flow, sessions, violations, infraCostPerMonth),
+    repeatedSteps: computeRepeatedSteps(flow, sessions),
   }));
 
   return { flows: journeyFlows };

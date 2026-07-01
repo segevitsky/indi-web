@@ -40,11 +40,20 @@ export interface FlowCostAndPerf {
   avgDurationMs: number;
 }
 
+/** A step called more than once, on average, within a single session along a flow —
+ * distinct from insights' endpoint-level duplicate count, which is a same-second re-request. */
+export interface RepeatedStep {
+  step: string;
+  avgCallsPerSession: number;
+  totalCalls: number;
+}
+
 export interface JourneyFlow {
   flow: MinedFlow;
   funnel: Funnel;
   conversion: FlowConversion;
   costAndPerf: FlowCostAndPerf;
+  repeatedSteps: RepeatedStep[];
 }
 
 export interface JourneysResult {
