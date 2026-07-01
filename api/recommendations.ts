@@ -13,6 +13,10 @@ const supabaseUrl = 'https://odgbuevicaklqygbykos.supabase.co';
 const supabaseAnonKey = 'sb_publishable_iBPK_t8lnmU4bFbwMxUQZw_6dhM6N21';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Ask Vercel for as much execution time as the plan allows — a Claude call with
+// thinking enabled can run past the default 10s limit.
+export const config = { maxDuration: 60 };
+
 /** How long a cached recommendation set is served before calling Claude again.
  * This also doubles as the rate limit on real Claude calls per team. */
 const CACHE_WINDOW_MINUTES = 30;
@@ -98,11 +102,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const response = await anthropic.messages.parse({
       model: 'claude-opus-4-8',
-      max_tokens: 16000,
+      max_tokens: 4096,
       thinking: { type: 'adaptive' },
       system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: JSON.stringify({ insights, journeys }) }],
-      output_config: { format: zodOutputFormat(RecSchema) },
+      output_config: { effort: 'low', format: zodOutputFormat(RecSchema) },
     });
 
     const parsed = response.parsed_output;
