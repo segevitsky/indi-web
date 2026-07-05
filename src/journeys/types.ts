@@ -34,10 +34,17 @@ export interface FlowConversion {
   conversionRate: number;
 }
 
+export interface FlowCostMethodology {
+  wastedCalls: number;
+  wastedLatencyMs: number;
+  totalSystemLatencyMs: number;
+}
+
 export interface FlowCostAndPerf {
   estimatedMonthlyCost: number;
   violationCount: number;
   avgDurationMs: number;
+  methodology: FlowCostMethodology;
 }
 
 /** A step called more than once, on average, within a single session along a flow —

@@ -238,14 +238,31 @@ export function computeConversion(flow: MinedFlow, sessions: MergedSession[]): F
   return { convertedSessions, conversionRate: convertedSessions / totalSessions };
 }
 
+/**
+ * Cost is derived only from actual waste in this flow — not from how much traffic the flow
+ * represents — so a perfectly healthy, high-traffic flow doesn't get an inflated dollar figure.
+ * Two waste sources, both converted to "wasted milliseconds" so they're comparable and can be
+ * weighed against the system's total observed processing time:
+ *  - repeated steps: the "excess" calls beyond one-per-session (already computed by
+ *    computeRepeatedSteps), costed at this flow's own average event duration.
+ *  - violations: any step in this flow with a logged violation has its actual observed calls
+ *    (real durMs, not an average) counted as wasted — a violation is confirmed waste, not inferred.
+ */
 export function computeCostAndPerf(
   flow: MinedFlow,
   sessions: MergedSession[],
   violations: Violation[],
-  infraCostPerMonth: number | null
+  infraCostPerMonth: number | null,
+  totalSystemLatencyMs: number,
+  repeatedSteps: RepeatedStep[]
 ): FlowCostAndPerf {
   if (flow.steps.length === 0) {
-    return { estimatedMonthlyCost: 0, violationCount: 0, avgDurationMs: 0 };
+    return {
+      estimatedMonthlyCost: 0,
+      violationCount: 0,
+      avgDurationMs: 0,
+      methodology: { wastedCalls: 0, wastedLatencyMs: 0, totalSystemLatencyMs },
+    };
   }
 
   const stepSet = new Set(flow.steps);
@@ -256,15 +273,31 @@ export function computeCostAndPerf(
     flowEvents.length > 0 ? flowEvents.reduce((sum, e) => sum + e.durMs, 0) / flowEvents.length : 0;
 
   const violationCount = violations.filter((v) => stepSet.has(v.endpoint)).length;
+  const stepsWithViolations = new Set(violations.filter((v) => stepSet.has(v.endpoint)).map((v) => v.endpoint));
+  const violationFlaggedEvents = flowEvents.filter((e) => stepsWithViolations.has(e.step));
+  const violationWastedCalls = violationFlaggedEvents.length;
+  const violationWastedLatencyMs = violationFlaggedEvents.reduce((sum, e) => sum + e.durMs, 0);
 
-  const totalStepTouchingEvents = sessions.reduce(
-    (sum, s) => sum + s.events.filter((e) => stepSet.has(e.step)).length,
+  const repeatWastedCalls = repeatedSteps.reduce(
+    (sum, r) => sum + r.totalCalls * (1 - 1 / r.avgCallsPerSession),
     0
   );
-  const flowShare = totalStepTouchingEvents > 0 ? flowEvents.length / totalStepTouchingEvents : 0;
-  const estimatedMonthlyCost = infraCostPerMonth != null ? flowShare * infraCostPerMonth : 0;
+  const repeatWastedLatencyMs = repeatWastedCalls * avgDurationMs;
 
-  return { estimatedMonthlyCost, violationCount, avgDurationMs };
+  const wastedCalls = repeatWastedCalls + violationWastedCalls;
+  const wastedLatencyMs = repeatWastedLatencyMs + violationWastedLatencyMs;
+
+  const estimatedMonthlyCost =
+    totalSystemLatencyMs > 0 && infraCostPerMonth != null
+      ? Math.min(1, wastedLatencyMs / totalSystemLatencyMs) * infraCostPerMonth
+      : 0;
+
+  return {
+    estimatedMonthlyCost,
+    violationCount,
+    avgDurationMs,
+    methodology: { wastedCalls, wastedLatencyMs, totalSystemLatencyMs },
+  };
 }
 
 /** Steps a session calls more than once, on average, while walking this flow — the
@@ -289,19 +322,30 @@ export function computeRepeatedSteps(flow: MinedFlow, sessions: MergedSession[])
 export function mineJourneys(
   sessionTraces: SessionTraceRow[],
   violations: Violation[],
-  infraCostPerMonth: number | null
+  infraCostPerMonth: number | null,
+  totalSystemLatencyMs = 0
 ): JourneysResult {
   const sessions = mergeSessionsById(sessionTraces);
   const mined = mineFrequentSequences(sessions);
   const flows = mergeNamedFlows(sessions, mined);
 
-  const journeyFlows: JourneyFlow[] = flows.map((flow) => ({
-    flow,
-    funnel: buildFunnel(flow, sessions),
-    conversion: computeConversion(flow, sessions),
-    costAndPerf: computeCostAndPerf(flow, sessions, violations, infraCostPerMonth),
-    repeatedSteps: computeRepeatedSteps(flow, sessions),
-  }));
+  const journeyFlows: JourneyFlow[] = flows.map((flow) => {
+    const repeatedSteps = computeRepeatedSteps(flow, sessions);
+    return {
+      flow,
+      funnel: buildFunnel(flow, sessions),
+      conversion: computeConversion(flow, sessions),
+      costAndPerf: computeCostAndPerf(
+        flow,
+        sessions,
+        violations,
+        infraCostPerMonth,
+        totalSystemLatencyMs,
+        repeatedSteps
+      ),
+      repeatedSteps,
+    };
+  });
 
   return { flows: journeyFlows };
 }

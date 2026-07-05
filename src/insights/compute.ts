@@ -17,6 +17,7 @@ interface MergedEndpoint {
   status5xx: number;
   latencyBuckets: number[];
   latencyMax: number;
+  latencySum: number;
   duplicateCount: number;
 }
 
@@ -36,6 +37,7 @@ function mergeEndpointStats(rows: EndpointStatsRow[]): MergedEndpoint[] {
         status5xx: 0,
         latencyBuckets: new Array(LATENCY_BUCKET_BOUNDS.length + 1).fill(0),
         latencyMax: 0,
+        latencySum: 0,
         duplicateCount: 0,
       };
       byKey.set(key, merged);
@@ -45,6 +47,7 @@ function mergeEndpointStats(rows: EndpointStatsRow[]): MergedEndpoint[] {
     merged.status4xx += row.status_4xx;
     merged.status5xx += row.status_5xx;
     merged.duplicateCount += row.duplicate_count;
+    merged.latencySum += row.latency_sum;
     merged.latencyMax = Math.max(merged.latencyMax, row.latency_max);
     row.latency_buckets.forEach((count, i) => {
       merged.latencyBuckets[i] += count;
@@ -107,9 +110,22 @@ export function computeInsights(
     wasteRatio,
   };
 
+  // Money is weighted by latency, not raw call count — a slow endpoint's wasted calls consume
+  // more processing time (and presumably more infra cost) than a fast endpoint's, so treating
+  // every call as equally expensive would misrepresent where the money is actually going.
+  const totalLatencyMs = merged.reduce((sum, m) => sum + m.latencySum, 0);
+  const totalWastedLatencyMs = merged.reduce((sum, m, i) => {
+    const avgLatencyMs = m.callCount > 0 ? m.latencySum / m.callCount : 0;
+    const wastedCalls =
+      m.duplicateCount + m.status4xx + m.status5xx + (endpoints[i].p95 > SLOW_P95_THRESHOLD_MS ? m.callCount : 0);
+    return sum + wastedCalls * avgLatencyMs;
+  }, 0);
+  const latencyWeightedWasteRatio = totalLatencyMs > 0 ? Math.min(1, totalWastedLatencyMs / totalLatencyMs) : 0;
+
   const money: MoneyInsights = {
     wasteRatio,
-    monthlySavings: infraCostPerMonth != null ? wasteRatio * infraCostPerMonth : 0,
+    monthlySavings: infraCostPerMonth != null ? latencyWeightedWasteRatio * infraCostPerMonth : 0,
+    methodology: { totalWastedLatencyMs, totalLatencyMs, infraCostPerMonth },
   };
 
   return { kpis, endpoints, waste, money, violationCount: violations.length };

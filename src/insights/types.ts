@@ -75,9 +75,16 @@ export interface WasteSignals {
   slowEndpointVolume: number;
 }
 
+export interface MoneyMethodology {
+  totalWastedLatencyMs: number;
+  totalLatencyMs: number;
+  infraCostPerMonth: number | null;
+}
+
 export interface MoneyInsights {
   wasteRatio: number;
   monthlySavings: number;
+  methodology: MoneyMethodology;
 }
 
 export interface Insights {

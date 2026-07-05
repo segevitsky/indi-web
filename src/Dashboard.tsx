@@ -88,9 +88,24 @@ const SectionHelp: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-const KpiCard: React.FC<{ label: string; value: string; sublabel: string }> = ({ label, value, sublabel }) => (
+const KpiCard: React.FC<{ label: string; value: string; sublabel: string; tooltip?: React.ReactNode }> = ({
+  label,
+  value,
+  sublabel,
+  tooltip,
+}) => (
   <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">{label}</p>
+    <div className="flex items-center gap-1.5 mb-2">
+      <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">{label}</p>
+      {tooltip && (
+        <span className="group relative">
+          <HelpCircle className="w-3.5 h-3.5 text-gray-600 hover:text-gray-400 cursor-help" />
+          <span className="absolute left-0 top-full mt-2 hidden group-hover:block z-10 w-72 whitespace-normal bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs font-normal normal-case text-gray-300 shadow-xl">
+            {tooltip}
+          </span>
+        </span>
+      )}
+    </div>
     <p className="text-3xl font-bold text-white mb-1">{value}</p>
     <p className="text-sm text-gray-500">{sublabel}</p>
   </div>
@@ -102,6 +117,14 @@ const KpiRow: React.FC<{ insights: Insights }> = ({ insights }) => (
       label="Monthly Savings"
       value={formatCurrency(insights.money.monthlySavings)}
       sublabel={insights.money.monthlySavings > 0 ? 'from measured waste' : 'set infra cost in Settings'}
+      tooltip={
+        <>
+          Est. from {Math.round(insights.money.methodology.totalWastedLatencyMs).toLocaleString()}ms of wasted
+          processing time out of {Math.round(insights.money.methodology.totalLatencyMs).toLocaleString()}ms
+          observed in total (duplicate, error, and slow calls, weighted by how long each actually took — not
+          just how many there were), applied to your reported monthly infra cost.
+        </>
+      }
     />
     <KpiCard label="Calls / Day" value={insights.kpis.totalCallsPerDay.toLocaleString()} sublabel="last 24h" />
     <KpiCard
@@ -392,7 +415,18 @@ const JourneyCard: React.FC<{ journey: JourneyFlow }> = ({ journey }) => (
       {(journey.conversion.conversionRate * 100).toFixed(0)}% converted &middot; avg {journey.costAndPerf.avgDurationMs.toFixed(0)}ms
       &middot; {journey.costAndPerf.violationCount} violations
       {journey.costAndPerf.estimatedMonthlyCost > 0 && (
-        <> &middot; {formatCurrency(journey.costAndPerf.estimatedMonthlyCost)}/mo</>
+        <>
+          {' '}
+          &middot;{' '}
+          <span className="group relative underline decoration-dotted cursor-help">
+            {formatCurrency(journey.costAndPerf.estimatedMonthlyCost)}/mo
+            <span className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-10 w-64 whitespace-normal bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-300 shadow-xl normal-case">
+              Est. from {journey.costAndPerf.methodology.wastedCalls.toFixed(0)} wasted calls in this flow
+              (redundant repeats and/or violation-flagged calls), as a share of your system&apos;s total
+              observed processing time, applied to your reported monthly infra cost.
+            </span>
+          </span>
+        </>
       )}
     </p>
     <FunnelBar funnel={journey.funnel} />
@@ -498,7 +532,12 @@ const Dashboard = () => {
           ]);
 
           const computedInsights = computeInsights(endpointStats, violationsData || [], infraCostPerMonth);
-          const computedJourneys = mineJourneys(sessionTraces, violationsData || [], infraCostPerMonth);
+          const computedJourneys = mineJourneys(
+            sessionTraces,
+            violationsData || [],
+            infraCostPerMonth,
+            computedInsights.money.methodology.totalLatencyMs
+          );
           setInsights(computedInsights);
           setJourneys(computedJourneys);
           setTrend(computeWeeklyTrend(dailyRollups));
