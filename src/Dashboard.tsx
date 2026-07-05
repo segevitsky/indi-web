@@ -361,7 +361,10 @@ const AIRecommendationsSection: React.FC<{ recommendations: RecommendationItem[]
   </div>
 );
 
-const MoneyLeakingSection: React.FC<{ endpoints: EndpointInsight[] }> = ({ endpoints }) => {
+const MoneyLeakingSection: React.FC<{ endpoints: EndpointInsight[]; timeRange: TimeRange }> = ({
+  endpoints,
+  timeRange,
+}) => {
   const sorted = [...endpoints].sort((a, b) => wasteScore(b) - wasteScore(a));
 
   return (
@@ -371,7 +374,7 @@ const MoneyLeakingSection: React.FC<{ endpoints: EndpointInsight[] }> = ({ endpo
         <h3 className="text-lg font-bold text-white">Where Money Is Leaking</h3>
       </div>
       {sorted.length === 0 ? (
-        <p className="text-sm text-gray-500">No endpoint data in the last 24h.</p>
+        <p className="text-sm text-gray-500">No endpoint data in the {TIME_RANGE_SUBLABELS[timeRange]}.</p>
       ) : (
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {sorted.map((e) => (
@@ -843,7 +846,7 @@ const Dashboard = () => {
 
         {insights && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <MoneyLeakingSection endpoints={insights.endpoints} />
+            <MoneyLeakingSection endpoints={insights.endpoints} timeRange={timeRange} />
             <QuickWinsSection endpoints={insights.endpoints} />
           </div>
         )}
