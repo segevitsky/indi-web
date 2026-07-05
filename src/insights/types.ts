@@ -30,6 +30,9 @@ export interface SequenceEvent {
   status: number;
   tOffsetMs: number;
   durMs: number;
+  /** Templated frontend route the call fired from (e.g. "/org-chart"). Optional — older rows
+   * recorded before the SDK captured this won't have it. */
+  page?: string;
 }
 
 export interface FlowTag {

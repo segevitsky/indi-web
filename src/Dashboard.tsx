@@ -435,6 +435,12 @@ const JourneyCard: React.FC<{ journey: JourneyFlow }> = ({ journey }) => (
         {journey.repeatedSteps.map((r) => (
           <p key={r.step} className="text-xs text-yellow-400">
             <code>{r.step}</code> called {r.avgCallsPerSession.toFixed(1)}x per session &mdash; likely redundant within this journey
+            {r.pages.length > 0 && (
+              <span className="text-gray-500">
+                {' '}
+                (mostly on <code>{r.pages[0]}</code>)
+              </span>
+            )}
           </p>
         ))}
       </div>

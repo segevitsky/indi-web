@@ -309,11 +309,18 @@ export function computeRepeatedSteps(flow: MinedFlow, sessions: MergedSession[])
 
   return Array.from(new Set(flow.steps))
     .map((step) => {
-      const totalCalls = matchingSessions.reduce(
-        (sum, s) => sum + s.steps.filter((st) => st === step).length,
-        0
-      );
-      return { step, totalCalls, avgCallsPerSession: totalCalls / matchingSessions.length };
+      const matchingEvents = matchingSessions.flatMap((s) => s.events.filter((e) => e.step === step));
+      const totalCalls = matchingEvents.length;
+
+      const pageCounts = new Map<string, number>();
+      for (const e of matchingEvents) {
+        if (e.page) pageCounts.set(e.page, (pageCounts.get(e.page) ?? 0) + 1);
+      }
+      const pages = Array.from(pageCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(([page]) => page);
+
+      return { step, totalCalls, avgCallsPerSession: totalCalls / matchingSessions.length, pages };
     })
     .filter((s) => s.avgCallsPerSession > 1)
     .sort((a, b) => b.avgCallsPerSession - a.avgCallsPerSession);

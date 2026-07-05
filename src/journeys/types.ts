@@ -53,6 +53,9 @@ export interface RepeatedStep {
   step: string;
   avgCallsPerSession: number;
   totalCalls: number;
+  /** Frontend pages this step fired from within these sessions, most common first — empty if
+   * the underlying events predate page capture. */
+  pages: string[];
 }
 
 export interface JourneyFlow {

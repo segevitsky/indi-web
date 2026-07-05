@@ -81,10 +81,10 @@ describe('computeRepeatedSteps', () => {
       started_at: 0,
       ended_at: 4000,
       events: [
-        { step: '/api/search', method: 'GET', status: 200, tOffsetMs: 0, durMs: 80 },
-        { step: '/api/product/:id', method: 'GET', status: 200, tOffsetMs: 1000, durMs: 60 },
-        { step: '/api/product/:id', method: 'GET', status: 200, tOffsetMs: 2000, durMs: 60 },
-        { step: '/api/checkout', method: 'POST', status: 201, tOffsetMs: 3000, durMs: 200 },
+        { step: '/api/search', method: 'GET', status: 200, tOffsetMs: 0, durMs: 80, page: '/search' },
+        { step: '/api/product/:id', method: 'GET', status: 200, tOffsetMs: 1000, durMs: 60, page: '/catalog' },
+        { step: '/api/product/:id', method: 'GET', status: 200, tOffsetMs: 2000, durMs: 60, page: '/catalog' },
+        { step: '/api/checkout', method: 'POST', status: 201, tOffsetMs: 3000, durMs: 200, page: '/checkout' },
       ],
       flow_tags: [],
       status_summary: {},
@@ -97,9 +97,9 @@ describe('computeRepeatedSteps', () => {
       started_at: 0,
       ended_at: 3000,
       events: [
-        { step: '/api/search', method: 'GET', status: 200, tOffsetMs: 0, durMs: 80 },
-        { step: '/api/product/:id', method: 'GET', status: 200, tOffsetMs: 1000, durMs: 60 },
-        { step: '/api/checkout', method: 'POST', status: 201, tOffsetMs: 2000, durMs: 200 },
+        { step: '/api/search', method: 'GET', status: 200, tOffsetMs: 0, durMs: 80, page: '/search' },
+        { step: '/api/product/:id', method: 'GET', status: 200, tOffsetMs: 1000, durMs: 60, page: '/wishlist' },
+        { step: '/api/checkout', method: 'POST', status: 201, tOffsetMs: 2000, durMs: 200, page: '/checkout' },
       ],
       flow_tags: [],
       status_summary: {},
@@ -123,6 +123,15 @@ describe('computeRepeatedSteps', () => {
     expect(product).toBeDefined();
     expect(product!.totalCalls).toBe(3); // 2 in r1, 1 in r2
     expect(product!.avgCallsPerSession).toBeCloseTo(1.5, 5);
+  });
+
+  it('surfaces the pages a repeated step fires from, most common first', () => {
+    const sessions = mergeSessionsById(repeatFixture);
+    const repeated = computeRepeatedSteps(flow, sessions);
+
+    const product = repeated.find((r) => r.step === '/api/product/:id');
+    // /catalog appears twice (both r1 calls), /wishlist once (r2) -> /catalog sorts first.
+    expect(product!.pages).toEqual(['/catalog', '/wishlist']);
   });
 
   it('does not flag a step called at most once per session', () => {
