@@ -87,3 +87,31 @@ export interface Insights {
   money: MoneyInsights;
   violationCount: number;
 }
+
+/** Row read from `endpoint_daily_rollups` — one row per endpoint/method/day. */
+export interface EndpointDailyRollupRow {
+  id: string;
+  team_id: string | null;
+  endpoint: string;
+  method: string;
+  day: string;
+  call_count: number;
+  status_2xx: number;
+  status_3xx: number;
+  status_4xx: number;
+  status_5xx: number;
+  status_other: number;
+  duplicate_count: number;
+  latency_sum: number;
+  latency_max: number;
+  p50: number | null;
+  p95: number | null;
+  p99: number | null;
+  created_at: string;
+}
+
+export interface WeeklyTrendPoint {
+  weekStart: string;
+  totalCalls: number;
+  errorRate: number;
+}

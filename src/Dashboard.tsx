@@ -17,18 +17,21 @@ import {
   GitBranch,
   Sparkles,
   HelpCircle,
+  TrendingUp,
 } from 'lucide-react';
 import { supabase, type Team, type Indicator, type Violation } from './supabase/config';
 import { signOut, getUser, getTeamForUser, createTeamForUser } from './supabase/auth';
 import { getInfraCostPerMonth } from './supabase/teamSettings';
 import { computeInsights } from './insights/compute';
-import { fetchEndpointStats, fetchSessionTraces } from './insights/fetchLive';
-import type { EndpointInsight, Insights } from './insights/types';
+import { computeWeeklyTrend } from './insights/trends';
+import { fetchDailyRollups, fetchEndpointStats, fetchSessionTraces } from './insights/fetchLive';
+import type { EndpointInsight, Insights, WeeklyTrendPoint } from './insights/types';
 import { mineJourneys } from './journeys/mine';
 import type { Funnel, JourneyFlow, JourneysResult } from './journeys/types';
 import type { User } from '@supabase/supabase-js';
 
 const TIME_RANGE_MS = 24 * 60 * 60 * 1000;
+const TREND_RANGE_MS = 90 * 24 * 60 * 60 * 1000;
 /** Mirrors src/insights/compute.ts's own slow-endpoint threshold, for consistent labeling. */
 const SLOW_P95_THRESHOLD_MS = 1000;
 
@@ -113,6 +116,58 @@ const KpiRow: React.FC<{ insights: Insights }> = ({ insights }) => (
     />
   </div>
 );
+
+const TrendsSection: React.FC<{ trend: WeeklyTrendPoint[] }> = ({ trend }) => {
+  if (trend.length === 0) {
+    return null;
+  }
+
+  const maxCalls = Math.max(...trend.map((w) => w.totalCalls), 1);
+  const maxErrorRate = Math.max(...trend.map((w) => w.errorRate), 0.01);
+  const formatWeek = (weekStart: string) => {
+    const d = new Date(weekStart + 'T00:00:00Z');
+    return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+  };
+
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-8">
+      <div className="flex items-center gap-2 mb-6">
+        <TrendingUp className="w-5 h-5 text-teal-400" />
+        <h3 className="text-lg font-bold text-white">Trends (last {trend.length} weeks)</h3>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Calls / Week</p>
+          <div className="flex items-end gap-1 h-32">
+            {trend.map((w) => (
+              <div key={w.weekStart} className="flex-1 flex flex-col items-center justify-end h-full" title={`${w.totalCalls.toLocaleString()} calls`}>
+                <div
+                  className="w-full bg-indi-purple-500 rounded-t"
+                  style={{ height: `${Math.max((w.totalCalls / maxCalls) * 100, 3)}%` }}
+                />
+                <span className="text-[10px] text-gray-500 mt-1 rotate-0">{formatWeek(w.weekStart)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Error Rate / Week</p>
+          <div className="flex items-end gap-1 h-32">
+            {trend.map((w) => (
+              <div key={w.weekStart} className="flex-1 flex flex-col items-center justify-end h-full" title={`${(w.errorRate * 100).toFixed(1)}% errors`}>
+                <div
+                  className={`w-full rounded-t ${w.errorRate > maxErrorRate * 0.6 ? 'bg-red-500' : 'bg-yellow-500'}`}
+                  style={{ height: `${Math.max((w.errorRate / maxErrorRate) * 100, 3)}%` }}
+                />
+                <span className="text-[10px] text-gray-500 mt-1">{formatWeek(w.weekStart)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const PriorityFixCard: React.FC<{
   endpoint: EndpointInsight | null;
@@ -387,6 +442,7 @@ const Dashboard = () => {
   const [insights, setInsights] = useState<Insights | null>(null);
   const [journeys, setJourneys] = useState<JourneysResult | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationsResponse | null>(null);
+  const [trend, setTrend] = useState<WeeklyTrendPoint[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -426,16 +482,18 @@ const Dashboard = () => {
           setViolations(violationsData || []);
 
           const sinceMs = Date.now() - TIME_RANGE_MS;
-          const [endpointStats, sessionTraces, infraCostPerMonth] = await Promise.all([
+          const [endpointStats, sessionTraces, infraCostPerMonth, dailyRollups] = await Promise.all([
             fetchEndpointStats(userTeam.id, sinceMs),
             fetchSessionTraces(userTeam.id, sinceMs),
             getInfraCostPerMonth(userTeam.id),
+            fetchDailyRollups(userTeam.id, Date.now() - TREND_RANGE_MS),
           ]);
 
           const computedInsights = computeInsights(endpointStats, violationsData || [], infraCostPerMonth);
           const computedJourneys = mineJourneys(sessionTraces, violationsData || [], infraCostPerMonth);
           setInsights(computedInsights);
           setJourneys(computedJourneys);
+          setTrend(computeWeeklyTrend(dailyRollups));
 
           // AI recommendations are best-effort — the dashboard above already works without them.
           try {
@@ -647,6 +705,7 @@ const Dashboard = () => {
           </p>
         </div>
 
+        {trend && <TrendsSection trend={trend} />}
         {insights && <KpiRow insights={insights} />}
         {insights && (
           <PriorityFixCard
