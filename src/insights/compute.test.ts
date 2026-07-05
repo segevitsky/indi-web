@@ -50,6 +50,23 @@ describe('computeInsights', () => {
     expect(withoutCost.money.methodology.infraCostPerMonth).toBeNull();
   });
 
+  it('gives each endpoint a proportional dollar share that sums back to monthlySavings exactly', () => {
+    const insights = computeInsights(endpointStatsFixture, violationsFixture, 1000);
+
+    const users = insights.endpoints.find((e) => e.endpoint === '/api/users/:id')!;
+    const reports = insights.endpoints.find((e) => e.endpoint === '/api/reports/export')!;
+
+    expect(users.wastedLatencyMs).toBeCloseTo(700, 5);
+    expect(reports.wastedLatencyMs).toBeCloseTo(54000, 5);
+
+    // reports/export is the slow, flagged endpoint — it should carry the overwhelming majority
+    // of the dollar figure despite users/:id having more raw wasted calls.
+    expect(reports.estimatedMonthlyCost).toBeGreaterThan(users.estimatedMonthlyCost * 10);
+
+    const totalAllocated = insights.endpoints.reduce((sum, e) => sum + e.estimatedMonthlyCost, 0);
+    expect(totalAllocated).toBeCloseTo(insights.money.monthlySavings, 5);
+  });
+
   it('weighs waste by latency, not raw call count — a high-volume-but-cheap endpoint should not dominate the dollar estimate', () => {
     const now = 1735689600000;
     const rows: EndpointStatsRow[] = [

@@ -59,7 +59,7 @@ function mergeEndpointStats(rows: WasteRow[]): MergedEndpoint[] {
   return Array.from(byKey.values());
 }
 
-function toEndpointInsight(merged: MergedEndpoint): EndpointInsight {
+function toEndpointInsight(merged: MergedEndpoint): Omit<EndpointInsight, 'wastedLatencyMs' | 'estimatedMonthlyCost'> {
   const errorCount = merged.status4xx + merged.status5xx;
   return {
     endpoint: merged.endpoint,
@@ -79,12 +79,12 @@ export function computeInsights(
   infraCostPerMonth: number | null
 ): Insights {
   const merged = mergeEndpointStats(endpointStats);
-  const endpoints = merged.map(toEndpointInsight);
+  const baseEndpoints = merged.map(toEndpointInsight);
 
   const totalCalls = merged.reduce((sum, m) => sum + m.callCount, 0);
   const errorCalls = merged.reduce((sum, m) => sum + m.status4xx + m.status5xx, 0);
   const duplicateCalls = merged.reduce((sum, m) => sum + m.duplicateCount, 0);
-  const slowEndpointVolume = endpoints
+  const slowEndpointVolume = baseEndpoints
     .filter((e) => e.p95 > SLOW_P95_THRESHOLD_MS)
     .reduce((sum, e) => sum + e.callCount, 0);
 
@@ -116,12 +116,13 @@ export function computeInsights(
   // more processing time (and presumably more infra cost) than a fast endpoint's, so treating
   // every call as equally expensive would misrepresent where the money is actually going.
   const totalLatencyMs = merged.reduce((sum, m) => sum + m.latencySum, 0);
-  const totalWastedLatencyMs = merged.reduce((sum, m, i) => {
+  const wastedLatencyByEndpoint = merged.map((m, i) => {
     const avgLatencyMs = m.callCount > 0 ? m.latencySum / m.callCount : 0;
     const wastedCalls =
-      m.duplicateCount + m.status4xx + m.status5xx + (endpoints[i].p95 > SLOW_P95_THRESHOLD_MS ? m.callCount : 0);
-    return sum + wastedCalls * avgLatencyMs;
-  }, 0);
+      m.duplicateCount + m.status4xx + m.status5xx + (baseEndpoints[i].p95 > SLOW_P95_THRESHOLD_MS ? m.callCount : 0);
+    return wastedCalls * avgLatencyMs;
+  });
+  const totalWastedLatencyMs = wastedLatencyByEndpoint.reduce((sum, ms) => sum + ms, 0);
   const latencyWeightedWasteRatio = totalLatencyMs > 0 ? Math.min(1, totalWastedLatencyMs / totalLatencyMs) : 0;
 
   const money: MoneyInsights = {
@@ -129,6 +130,16 @@ export function computeInsights(
     monthlySavings: infraCostPerMonth != null ? latencyWeightedWasteRatio * infraCostPerMonth : 0,
     methodology: { totalWastedLatencyMs, totalLatencyMs, infraCostPerMonth },
   };
+
+  // Each endpoint's proportional slice of monthlySavings, by its own share of the total wasted
+  // time — these sum back to exactly monthlySavings, so the breakdown is provably consistent
+  // with the headline number rather than a separate, potentially-inconsistent calculation.
+  const endpoints: EndpointInsight[] = baseEndpoints.map((e, i) => ({
+    ...e,
+    wastedLatencyMs: wastedLatencyByEndpoint[i],
+    estimatedMonthlyCost:
+      totalWastedLatencyMs > 0 ? (wastedLatencyByEndpoint[i] / totalWastedLatencyMs) * money.monthlySavings : 0,
+  }));
 
   return { kpis, endpoints, waste, money, violationCount: violations.length };
 }

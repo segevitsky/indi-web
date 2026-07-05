@@ -138,7 +138,8 @@ const KpiRow: React.FC<{ insights: Insights; timeRange: TimeRange }> = ({ insigh
           Est. from {Math.round(insights.money.methodology.totalWastedLatencyMs).toLocaleString()}ms of wasted
           processing time out of {Math.round(insights.money.methodology.totalLatencyMs).toLocaleString()}ms
           observed in total (duplicate, error, and slow calls, weighted by how long each actually took — not
-          just how many there were), applied to your reported monthly infra cost.
+          just how many there were), applied to your reported monthly infra cost. See "Where Money Is Leaking"
+          below for exactly how much of this is each endpoint's own share.
         </>
       }
     />
@@ -390,6 +391,12 @@ const MoneyLeakingSection: React.FC<{ endpoints: EndpointInsight[]; timeRange: T
                 <span>{(e.errorRate * 100).toFixed(1)}% errors</span>
                 <span>p95 {e.p95}ms</span>
               </div>
+              {e.estimatedMonthlyCost > 0 && (
+                <p className="text-xs text-indi-purple-300 mt-2">
+                  {formatCurrency(e.estimatedMonthlyCost)}/mo &middot; {Math.round(e.wastedLatencyMs).toLocaleString()}ms
+                  of the total wasted time
+                </p>
+              )}
             </div>
           ))}
         </div>

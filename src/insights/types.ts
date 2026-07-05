@@ -76,6 +76,11 @@ export interface EndpointInsight {
   p95: number;
   p99: number;
   duplicateCount: number;
+  /** This endpoint's share of the system's total wasted processing time (ms). */
+  wastedLatencyMs: number;
+  /** This endpoint's proportional slice of `money.monthlySavings` — all endpoints' shares sum
+   * to that same total. */
+  estimatedMonthlyCost: number;
 }
 
 export interface WasteSignals {
