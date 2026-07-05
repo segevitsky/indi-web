@@ -47,7 +47,11 @@ export async function fetchDailyRollups(teamId: string, sinceMs: number): Promis
     .select('*')
     .eq('team_id', teamId)
     .gte('day', sinceDate)
-    .order('day', { ascending: true })
+    // Newest first: Supabase/PostgREST silently caps responses at a server-side max-rows
+    // setting (commonly 1000) regardless of the .limit() requested here — ordering ascending
+    // meant a truncated response kept the *oldest* rows and dropped the most recent ones,
+    // which is exactly backwards for a dashboard that cares most about recent data.
+    .order('day', { ascending: false })
     .limit(MAX_ROLLUP_ROWS);
 
   if (error) {
