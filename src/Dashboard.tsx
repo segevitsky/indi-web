@@ -559,6 +559,15 @@ const Dashboard = () => {
       .toISOString()
       .slice(0, 10);
     const windowed = rawDailyRollups.filter((r) => r.day >= sinceDate);
+    // TEMP DEBUG — remove once the empty-7d issue is diagnosed.
+    console.log('[indi-debug]', {
+      timeRange,
+      sinceDate,
+      totalRollupRows: rawDailyRollups.length,
+      windowedRows: windowed.length,
+      sampleDays: rawDailyRollups.slice(0, 3).map((r) => r.day),
+      lastDays: rawDailyRollups.slice(-3).map((r) => r.day),
+    });
     return computeInsights(windowed, violations, infraCostPerMonth);
   }, [timeRange, rawEndpointStats, rawDailyRollups, violations, infraCostPerMonth]);
 
