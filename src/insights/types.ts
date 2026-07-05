@@ -1,15 +1,9 @@
-/**
- * Flat, values-free row read from Supabase per endpoint per flush window.
- * Mirrors indi-runtime's EndpointStatsRow (src/analytics/types.ts) plus the
- * columns Postgres adds (id, created_at).
- */
-export interface EndpointStatsRow {
-  id: string;
-  team_id: string | null;
+/** The fields `computeInsights` actually needs — both `EndpointStatsRow` (24h, per flush
+ * window) and `EndpointDailyRollupRow` (7d/30d/90d, per day) satisfy this shape, so the same
+ * merge/percentile math works over either source without an adapter. */
+export interface WasteRow {
   endpoint: string;
   method: string;
-  window_start: number;
-  window_end: number;
   call_count: number;
   status_2xx: number;
   status_3xx: number;
@@ -20,6 +14,18 @@ export interface EndpointStatsRow {
   latency_sum: number;
   latency_max: number;
   duplicate_count: number;
+}
+
+/**
+ * Flat, values-free row read from Supabase per endpoint per flush window.
+ * Mirrors indi-runtime's EndpointStatsRow (src/analytics/types.ts) plus the
+ * columns Postgres adds (id, created_at).
+ */
+export interface EndpointStatsRow extends WasteRow {
+  id: string;
+  team_id: string | null;
+  window_start: number;
+  window_end: number;
   field_presence: Record<string, unknown> | null;
   created_at: string;
 }
@@ -99,21 +105,10 @@ export interface Insights {
 }
 
 /** Row read from `endpoint_daily_rollups` — one row per endpoint/method/day. */
-export interface EndpointDailyRollupRow {
+export interface EndpointDailyRollupRow extends WasteRow {
   id: string;
   team_id: string | null;
-  endpoint: string;
-  method: string;
   day: string;
-  call_count: number;
-  status_2xx: number;
-  status_3xx: number;
-  status_4xx: number;
-  status_5xx: number;
-  status_other: number;
-  duplicate_count: number;
-  latency_sum: number;
-  latency_max: number;
   p50: number | null;
   p95: number | null;
   p99: number | null;

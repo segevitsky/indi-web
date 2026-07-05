@@ -31,13 +31,13 @@ $$ LANGUAGE plpgsql;
 
 INSERT INTO endpoint_daily_rollups (
   team_id, endpoint, method, day, call_count, status_2xx, status_3xx, status_4xx, status_5xx,
-  status_other, duplicate_count, latency_sum, latency_max, p50, p95, p99
+  status_other, duplicate_count, latency_sum, latency_max, latency_buckets, p50, p95, p99
 )
 SELECT
   team_id, endpoint, method,
   to_timestamp(window_start / 1000.0)::date,
   call_count, status_2xx, status_3xx, status_4xx, status_5xx, status_other, duplicate_count,
-  latency_sum, latency_max,
+  latency_sum, latency_max, latency_buckets,
   _estimate_percentile(latency_buckets, latency_max::numeric, call_count, 0.5),
   _estimate_percentile(latency_buckets, latency_max::numeric, call_count, 0.95),
   _estimate_percentile(latency_buckets, latency_max::numeric, call_count, 0.99)
@@ -53,6 +53,7 @@ ON CONFLICT (team_id, endpoint, method, day) DO UPDATE SET
   duplicate_count = EXCLUDED.duplicate_count,
   latency_sum = EXCLUDED.latency_sum,
   latency_max = EXCLUDED.latency_max,
+  latency_buckets = EXCLUDED.latency_buckets,
   p50 = EXCLUDED.p50,
   p95 = EXCLUDED.p95,
   p99 = EXCLUDED.p99;

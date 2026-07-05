@@ -24,6 +24,10 @@ Team used: `017d549d-0278-4227-a91d-a74fbf6bb15d` (the existing test team alread
 6. `006_seed_violations_90days.sql` — seeds contract/latency violations for the **two real
    problems only** (`/api/time-off/balance/:id` latency; `/api/goals/:id` review-cycle 500 spike +
    a `progress` number→string `type_mismatch`). Healthy endpoints get **no** violations by design.
+7. `007_add_latency_buckets_to_rollups.sql` — adds a `latency_buckets` column to the rollup
+   table (needed so multi-day percentile views can merge histograms correctly, not just already-
+   computed p95s — see the dashboard's timeframe-selector work). **After running this, re-run
+   `005` once more** to backfill `latency_buckets` on the rows already seeded.
 
 Each file is self-contained SQL — run with `supabase db push` if these are added as real
 migrations, or paste directly into the Supabase SQL editor / `psql` in order.

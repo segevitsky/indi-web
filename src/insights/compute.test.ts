@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { computeInsights } from './compute';
 import { endpointStatsFixture } from './fixtures/endpointStats.fixture';
 import { violationsFixture } from './fixtures/violations.fixture';
-import type { EndpointStatsRow } from './types';
+import type { EndpointDailyRollupRow, EndpointStatsRow } from './types';
 
 describe('computeInsights', () => {
   it('merges endpoint_stats rows across flush windows before computing percentiles', () => {
@@ -106,6 +106,38 @@ describe('computeInsights', () => {
     expect(insights.money.methodology.totalLatencyMs).toBeCloseTo(89000, 5);
     expect(insights.money.monthlySavings).toBeCloseTo((9000 / 89000) * 1000, 5);
     expect(insights.money.monthlySavings).toBeLessThan(insights.kpis.wasteRatio * 1000);
+  });
+
+  it('computes identical Insights whether the source is endpoint_stats or endpoint_daily_rollups', () => {
+    // Same values as endpointStatsFixture, reshaped as daily-rollup rows (day instead of a
+    // window_start/window_end pair, no field_presence) — proves computeInsights works the same
+    // over either table without an adapter, since both satisfy WasteRow.
+    const rollupFixture: EndpointDailyRollupRow[] = endpointStatsFixture.map((row, i) => ({
+      id: `rollup-${i}`,
+      team_id: row.team_id,
+      endpoint: row.endpoint,
+      method: row.method,
+      day: '2026-07-01',
+      call_count: row.call_count,
+      status_2xx: row.status_2xx,
+      status_3xx: row.status_3xx,
+      status_4xx: row.status_4xx,
+      status_5xx: row.status_5xx,
+      status_other: row.status_other,
+      latency_buckets: row.latency_buckets,
+      latency_sum: row.latency_sum,
+      latency_max: row.latency_max,
+      duplicate_count: row.duplicate_count,
+      p50: null,
+      p95: null,
+      p99: null,
+      created_at: row.created_at,
+    }));
+
+    const fromStats = computeInsights(endpointStatsFixture, violationsFixture, 1000);
+    const fromRollups = computeInsights(rollupFixture, violationsFixture, 1000);
+
+    expect(fromRollups).toEqual(fromStats);
   });
 
   it('returns an all-zero Insights object for empty input, never NaN', () => {

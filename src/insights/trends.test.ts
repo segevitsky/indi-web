@@ -16,6 +16,7 @@ function row(day: string, callCount: number, errorCalls: number): EndpointDailyR
     status_5xx: 0,
     status_other: 0,
     duplicate_count: 0,
+    latency_buckets: [],
     latency_sum: 0,
     latency_max: 0,
     p50: null,

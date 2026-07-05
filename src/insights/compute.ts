@@ -1,6 +1,6 @@
 import type { Violation } from '../supabase/config';
 import { estimatePercentile, LATENCY_BUCKET_BOUNDS } from './percentile';
-import type { EndpointInsight, EndpointStatsRow, Insights, Kpis, MoneyInsights, WasteSignals } from './types';
+import type { EndpointInsight, Insights, Kpis, MoneyInsights, WasteRow, WasteSignals } from './types';
 
 /** p95 above this is considered a "slow" endpoint for waste-signal purposes. Tunable. */
 const SLOW_P95_THRESHOLD_MS = 1000;
@@ -21,8 +21,10 @@ interface MergedEndpoint {
   duplicateCount: number;
 }
 
-/** endpoint_stats has one row per flush window — merge rows for the same (endpoint, method). */
-function mergeEndpointStats(rows: EndpointStatsRow[]): MergedEndpoint[] {
+/** Merges rows for the same (endpoint, method) — works whether `rows` came from `endpoint_stats`
+ * (one row per flush window, 24h view) or `endpoint_daily_rollups` (one row per day, longer
+ * ranges); both satisfy WasteRow, so the same merge logic applies to either source. */
+function mergeEndpointStats(rows: WasteRow[]): MergedEndpoint[] {
   const byKey = new Map<string, MergedEndpoint>();
 
   for (const row of rows) {
@@ -72,7 +74,7 @@ function toEndpointInsight(merged: MergedEndpoint): EndpointInsight {
 }
 
 export function computeInsights(
-  endpointStats: EndpointStatsRow[],
+  endpointStats: WasteRow[],
   violations: Violation[],
   infraCostPerMonth: number | null
 ): Insights {

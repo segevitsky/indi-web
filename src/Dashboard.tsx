@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Layout,
@@ -25,13 +25,22 @@ import { getInfraCostPerMonth } from './supabase/teamSettings';
 import { computeInsights } from './insights/compute';
 import { computeWeeklyTrend } from './insights/trends';
 import { fetchDailyRollups, fetchEndpointStats, fetchSessionTraces } from './insights/fetchLive';
-import type { EndpointInsight, Insights, WeeklyTrendPoint } from './insights/types';
+import type { EndpointDailyRollupRow, EndpointInsight, EndpointStatsRow, Insights, WeeklyTrendPoint } from './insights/types';
 import { mineJourneys } from './journeys/mine';
 import type { Funnel, JourneyFlow, JourneysResult } from './journeys/types';
 import type { User } from '@supabase/supabase-js';
 
 const TIME_RANGE_MS = 24 * 60 * 60 * 1000;
 const TREND_RANGE_MS = 90 * 24 * 60 * 60 * 1000;
+
+type TimeRange = '24h' | '7d' | '30d' | '90d';
+const TIME_RANGE_OPTIONS: { value: TimeRange; label: string }[] = [
+  { value: '24h', label: '24h' },
+  { value: '7d', label: '7d' },
+  { value: '30d', label: '30d' },
+  { value: '90d', label: '90d' },
+];
+const TIME_RANGE_DAYS: Record<Exclude<TimeRange, '24h'>, number> = { '7d': 7, '30d': 30, '90d': 90 };
 /** Mirrors src/insights/compute.ts's own slow-endpoint threshold, for consistent labeling. */
 const SLOW_P95_THRESHOLD_MS = 1000;
 
@@ -111,7 +120,14 @@ const KpiCard: React.FC<{ label: string; value: string; sublabel: string; toolti
   </div>
 );
 
-const KpiRow: React.FC<{ insights: Insights }> = ({ insights }) => (
+const TIME_RANGE_SUBLABELS: Record<TimeRange, string> = {
+  '24h': 'last 24h',
+  '7d': 'last 7 days',
+  '30d': 'last 30 days',
+  '90d': 'last 90 days',
+};
+
+const KpiRow: React.FC<{ insights: Insights; timeRange: TimeRange }> = ({ insights, timeRange }) => (
   <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
     <KpiCard
       label="Monthly Savings"
@@ -126,7 +142,11 @@ const KpiRow: React.FC<{ insights: Insights }> = ({ insights }) => (
         </>
       }
     />
-    <KpiCard label="Calls / Day" value={insights.kpis.totalCallsPerDay.toLocaleString()} sublabel="last 24h" />
+    <KpiCard
+      label={timeRange === '24h' ? 'Calls / Day' : 'Total Calls'}
+      value={insights.kpis.totalCallsPerDay.toLocaleString()}
+      sublabel={TIME_RANGE_SUBLABELS[timeRange]}
+    />
     <KpiCard
       label="Health Score"
       value={insights.kpis.healthScore.toFixed(0)}
@@ -137,6 +157,28 @@ const KpiRow: React.FC<{ insights: Insights }> = ({ insights }) => (
       value={`${(insights.kpis.wasteRatio * 100).toFixed(0)}%`}
       sublabel="of total call volume"
     />
+  </div>
+);
+
+const TimeRangePicker: React.FC<{ value: TimeRange; onChange: (range: TimeRange) => void }> = ({
+  value,
+  onChange,
+}) => (
+  <div className="flex items-center gap-2 mb-4">
+    <span className="text-xs font-bold text-gray-500 uppercase tracking-wide mr-1">Timeframe</span>
+    <div className="inline-flex bg-gray-900 border border-gray-800 rounded-lg p-1">
+      {TIME_RANGE_OPTIONS.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${
+            value === opt.value ? 'bg-indi-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
   </div>
 );
 
@@ -456,6 +498,7 @@ const JourneysSection: React.FC<{ journeys: JourneysResult }> = ({ journeys }) =
     <div className="flex items-center gap-2 mb-6">
       <GitBranch className="w-5 h-5 text-teal-400" />
       <h3 className="text-lg font-bold text-white">Journeys</h3>
+      <span className="text-xs text-gray-600">(last 24h, independent of the timeframe above)</span>
       <SectionHelp>
         <p>
           Each flow is a sequence of API calls made during real user sessions, most frequent first.
@@ -490,12 +533,31 @@ const Dashboard = () => {
   const [team, setTeam] = useState<Team | null>(null);
   const [indicators, setIndicators] = useState<Indicator[]>([]);
   const [violations, setViolations] = useState<Violation[]>([]);
-  const [insights, setInsights] = useState<Insights | null>(null);
+  const [rawEndpointStats, setRawEndpointStats] = useState<EndpointStatsRow[]>([]);
+  const [rawDailyRollups, setRawDailyRollups] = useState<EndpointDailyRollupRow[]>([]);
+  const [infraCostPerMonth, setInfraCostPerMonth] = useState<number | null>(null);
+  const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [journeys, setJourneys] = useState<JourneysResult | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationsResponse | null>(null);
   const [trend, setTrend] = useState<WeeklyTrendPoint[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+
+  // KPIs / Slow Endpoints / Money Leaking / Priority Fix respect the timeframe picker — 24h reads
+  // the detailed endpoint_stats table directly, anything longer reads the pre-aggregated daily
+  // rollups (already fetched in full for Trends) filtered down to the selected window. Journeys
+  // and AI Recommendations intentionally stay pinned to the fixed 24h view (see plan/discussion).
+  const insights = useMemo<Insights | null>(() => {
+    if (rawEndpointStats.length === 0 && rawDailyRollups.length === 0) return null;
+    if (timeRange === '24h') {
+      return computeInsights(rawEndpointStats, violations, infraCostPerMonth);
+    }
+    const sinceDate = new Date(Date.now() - TIME_RANGE_DAYS[timeRange] * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    const windowed = rawDailyRollups.filter((r) => r.day >= sinceDate);
+    return computeInsights(windowed, violations, infraCostPerMonth);
+  }, [timeRange, rawEndpointStats, rawDailyRollups, violations, infraCostPerMonth]);
 
   // Load user, team, indicators/violations, and computed insights/journeys.
   useEffect(() => {
@@ -540,6 +602,8 @@ const Dashboard = () => {
             fetchDailyRollups(userTeam.id, Date.now() - TREND_RANGE_MS),
           ]);
 
+          // Journeys and AI Recommendations always use the fixed 24h view, regardless of the
+          // timeframe picker (see JourneysSection's note and the plan for why).
           const computedInsights = computeInsights(endpointStats, violationsData || [], infraCostPerMonth);
           const computedJourneys = mineJourneys(
             sessionTraces,
@@ -547,7 +611,9 @@ const Dashboard = () => {
             infraCostPerMonth,
             computedInsights.money.methodology.totalLatencyMs
           );
-          setInsights(computedInsights);
+          setRawEndpointStats(endpointStats);
+          setRawDailyRollups(dailyRollups);
+          setInfraCostPerMonth(infraCostPerMonth);
           setJourneys(computedJourneys);
           setTrend(computeWeeklyTrend(dailyRollups));
 
@@ -762,7 +828,8 @@ const Dashboard = () => {
         </div>
 
         {trend && <TrendsSection trend={trend} />}
-        {insights && <KpiRow insights={insights} />}
+        <TimeRangePicker value={timeRange} onChange={setTimeRange} />
+        {insights && <KpiRow insights={insights} timeRange={timeRange} />}
         {insights && (
           <PriorityFixCard
             endpoint={
