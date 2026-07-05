@@ -140,9 +140,13 @@ const TrendsSection: React.FC<{ trend: WeeklyTrendPoint[] }> = ({ trend }) => {
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Calls / Week</p>
           <div className="flex items-end gap-1 h-32">
             {trend.map((w) => (
-              <div key={w.weekStart} className="flex-1 flex flex-col items-center justify-end h-full" title={`${w.totalCalls.toLocaleString()} calls`}>
+              <div key={w.weekStart} className="group relative flex-1 flex flex-col items-center justify-end h-full">
+                <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 whitespace-nowrap bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs shadow-xl">
+                  <p className="text-white font-bold">{w.totalCalls.toLocaleString()} calls</p>
+                  <p className="text-gray-400">week of {formatWeek(w.weekStart)}</p>
+                </div>
                 <div
-                  className="w-full bg-indi-purple-500 rounded-t"
+                  className="w-full bg-indi-purple-500 rounded-t group-hover:bg-indi-purple-400 transition-colors"
                   style={{ height: `${Math.max((w.totalCalls / maxCalls) * 100, 3)}%` }}
                 />
                 <span className="text-[10px] text-gray-500 mt-1 rotate-0">{formatWeek(w.weekStart)}</span>
@@ -154,9 +158,13 @@ const TrendsSection: React.FC<{ trend: WeeklyTrendPoint[] }> = ({ trend }) => {
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Error Rate / Week</p>
           <div className="flex items-end gap-1 h-32">
             {trend.map((w) => (
-              <div key={w.weekStart} className="flex-1 flex flex-col items-center justify-end h-full" title={`${(w.errorRate * 100).toFixed(1)}% errors`}>
+              <div key={w.weekStart} className="group relative flex-1 flex flex-col items-center justify-end h-full">
+                <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 whitespace-nowrap bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs shadow-xl">
+                  <p className="text-white font-bold">{(w.errorRate * 100).toFixed(1)}% errors</p>
+                  <p className="text-gray-400">week of {formatWeek(w.weekStart)}</p>
+                </div>
                 <div
-                  className={`w-full rounded-t ${w.errorRate > maxErrorRate * 0.6 ? 'bg-red-500' : 'bg-yellow-500'}`}
+                  className={`w-full rounded-t transition-colors ${w.errorRate > maxErrorRate * 0.6 ? 'bg-red-500 group-hover:bg-red-400' : 'bg-yellow-500 group-hover:bg-yellow-400'}`}
                   style={{ height: `${Math.max((w.errorRate / maxErrorRate) * 100, 3)}%` }}
                 />
                 <span className="text-[10px] text-gray-500 mt-1">{formatWeek(w.weekStart)}</span>
