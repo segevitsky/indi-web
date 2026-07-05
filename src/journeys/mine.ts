@@ -8,8 +8,22 @@ import type {
   MergedSession,
   MinedFlow,
   RepeatedStep,
+  SequenceEvent,
   SessionTraceRow,
 } from './types';
+
+/** Pages a step fired from among these events, most common first. */
+function rankPagesForStep(events: SequenceEvent[], step: string): string[] {
+  const pageCounts = new Map<string, number>();
+  for (const e of events) {
+    if (e.step === step && e.page) {
+      pageCounts.set(e.page, (pageCounts.get(e.page) ?? 0) + 1);
+    }
+  }
+  return Array.from(pageCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([page]) => page);
+}
 
 /** Only sequences of these lengths are mined. Tunable. */
 const MIN_SEQUENCE_LENGTH = 2;
@@ -194,6 +208,10 @@ export function mergeNamedFlows(sessions: MergedSession[], mined: MinedFlow[]): 
 export function buildFunnel(flow: MinedFlow, sessions: MergedSession[]): Funnel {
   if (flow.steps.length === 0) return { steps: [], dropOffAt: null };
 
+  const matchingEvents = sessions
+    .filter((s) => isOrderedSubsequence(flow.steps, s.steps))
+    .flatMap((s) => s.events);
+
   const reachCounts = flow.steps.map((_, i) => {
     const prefix = flow.steps.slice(0, i + 1);
     return sessions.filter((s) => isOrderedSubsequence(prefix, s.steps)).length;
@@ -204,6 +222,7 @@ export function buildFunnel(flow: MinedFlow, sessions: MergedSession[]): Funnel 
     step,
     sessionsReached: reachCounts[i],
     retention: reachCounts[i] / firstReach,
+    page: rankPagesForStep(matchingEvents, step)[0] ?? null,
   }));
 
   let dropOffAt: string | null = null;
@@ -311,14 +330,7 @@ export function computeRepeatedSteps(flow: MinedFlow, sessions: MergedSession[])
     .map((step) => {
       const matchingEvents = matchingSessions.flatMap((s) => s.events.filter((e) => e.step === step));
       const totalCalls = matchingEvents.length;
-
-      const pageCounts = new Map<string, number>();
-      for (const e of matchingEvents) {
-        if (e.page) pageCounts.set(e.page, (pageCounts.get(e.page) ?? 0) + 1);
-      }
-      const pages = Array.from(pageCounts.entries())
-        .sort((a, b) => b[1] - a[1])
-        .map(([page]) => page);
+      const pages = rankPagesForStep(matchingEvents, step);
 
       return { step, totalCalls, avgCallsPerSession: totalCalls / matchingSessions.length, pages };
     })

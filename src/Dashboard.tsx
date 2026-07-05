@@ -382,10 +382,13 @@ const SlowEndpointsSection: React.FC<{ endpoints: EndpointInsight[] }> = ({ endp
 
 const FunnelBar: React.FC<{ funnel: Funnel }> = ({ funnel }) => (
   <div className="space-y-2 mt-3">
-    {funnel.steps.map((step) => (
-      <div key={step.step}>
+    {funnel.steps.map((step, i) => (
+      <div key={`${step.step}-${i}`}>
         <div className="flex justify-between text-xs text-gray-500 mb-1">
-          <code>{step.step}</code>
+          <span>
+            <code>{step.step}</code>
+            {step.page && <span className="text-gray-600"> &middot; screen: {step.page}</span>}
+          </span>
           <span>
             {step.sessionsReached} ({(step.retention * 100).toFixed(0)}%)
             {funnel.dropOffAt === step.step && <span className="text-red-400 ml-2">drop-off</span>}

@@ -52,6 +52,48 @@ describe('buildFunnel', () => {
     const funnel = buildFunnel(checkoutFlow!, sessions);
     expect(funnel.dropOffAt).toBe('/api/checkout');
   });
+
+  it('attaches which page each step fired from, for the whole flow not just repeated steps', () => {
+    const pagedFixture: SessionTraceRow[] = [
+      {
+        id: 'pf-1',
+        team_id: 'team-1',
+        session_id: 'p1',
+        started_at: 0,
+        ended_at: 2000,
+        events: [
+          { step: '/api/search', method: 'GET', status: 200, tOffsetMs: 0, durMs: 80, page: '/search' },
+          { step: '/api/checkout', method: 'POST', status: 201, tOffsetMs: 1000, durMs: 200, page: '/checkout' },
+        ],
+        flow_tags: [],
+        status_summary: {},
+        created_at: '2026-07-01T00:00:00.000Z',
+      },
+    ];
+    const flow: MinedFlow = {
+      steps: ['/api/search', '/api/checkout'],
+      name: null,
+      source: 'mined',
+      sessionCount: 1,
+      frequency: 1,
+    };
+
+    const sessions = mergeSessionsById(pagedFixture);
+    const funnel = buildFunnel(flow, sessions);
+
+    expect(funnel.steps.map((s) => s.page)).toEqual(['/search', '/checkout']);
+  });
+
+  it('leaves page null for events recorded before page capture existed', () => {
+    const sessions = mergeSessionsById(sessionTracesFixture);
+    const mined = mineFrequentSequences(sessions);
+    const checkoutFlow = mined.find(
+      (f) => f.steps.length === 3 && f.steps.join('→') === '/api/search→/api/product/:id→/api/checkout'
+    );
+    const funnel = buildFunnel(checkoutFlow!, sessions);
+
+    expect(funnel.steps.every((s) => s.page === null)).toBe(true);
+  });
 });
 
 describe('mergeNamedFlows', () => {

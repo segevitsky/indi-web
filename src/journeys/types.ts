@@ -22,6 +22,9 @@ export interface FunnelStep {
   step: string;
   sessionsReached: number;
   retention: number;
+  /** Most common frontend page this step fired from, across the matching sessions — null if
+   * the underlying events predate page capture. */
+  page: string | null;
 }
 
 export interface Funnel {
