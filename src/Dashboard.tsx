@@ -55,6 +55,10 @@ function formatCurrency(num: number): string {
   return '$' + num.toFixed(2);
 }
 
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleString();
+}
+
 interface RecommendationItem {
   title: string;
   endpoint: string;
@@ -583,7 +587,15 @@ const FunnelBar: React.FC<{ funnel: Funnel }> = ({ funnel }) => (
   </div>
 );
 
-const JourneyCard: React.FC<{ journey: JourneyFlow }> = ({ journey }) => (
+const JourneyCard: React.FC<{
+  journey: JourneyFlow;
+  violations: Violation[];
+  onFilterViolations: (endpoints: string[]) => void;
+}> = ({ journey, violations, onFilterViolations }) => {
+  const stepSet = new Set(journey.flow.steps);
+  const matchingViolations = violations.filter((v) => stepSet.has(v.endpoint));
+
+  return (
   <div className="bg-gray-950 rounded-lg p-4">
     <div className="flex items-center justify-between mb-1">
       <code className="text-sm font-mono text-gray-200">{journey.flow.steps.join(' -> ') || journey.flow.name}</code>
@@ -594,7 +606,23 @@ const JourneyCard: React.FC<{ journey: JourneyFlow }> = ({ journey }) => (
     <p className="text-xs text-gray-500 mb-2">
       {journey.flow.sessionCount} sessions ({(journey.flow.frequency * 100).toFixed(0)}%) &middot;{' '}
       {(journey.conversion.conversionRate * 100).toFixed(0)}% converted &middot; avg {journey.costAndPerf.avgDurationMs.toFixed(0)}ms
-      &middot; {journey.costAndPerf.violationCount} violations
+      &middot;{' '}
+      {journey.costAndPerf.violationCount > 0 ? (
+        <span className="group relative underline decoration-dotted cursor-pointer" onClick={() => onFilterViolations(journey.flow.steps)}>
+          {journey.costAndPerf.violationCount} violations
+          <span className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-10 w-72 whitespace-normal bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-300 shadow-xl normal-case">
+            <span className="block text-gray-400 mb-1">Recent examples (click to see all below):</span>
+            {matchingViolations.slice(0, 3).map((v, i) => (
+              <span key={i} className="block mb-1">
+                <span className="text-gray-500">{formatDate(v.created_at)}:</span> {v.message}
+              </span>
+            ))}
+            {matchingViolations.length > 3 && <span className="text-gray-500">+{matchingViolations.length - 3} more</span>}
+          </span>
+        </span>
+      ) : (
+        '0 violations'
+      )}
       {journey.costAndPerf.estimatedMonthlyCost > 0 && (
         <>
           {' '}
@@ -627,9 +655,14 @@ const JourneyCard: React.FC<{ journey: JourneyFlow }> = ({ journey }) => (
       </div>
     )}
   </div>
-);
+  );
+};
 
-const JourneysSection: React.FC<{ journeys: JourneysResult }> = ({ journeys }) => (
+const JourneysSection: React.FC<{
+  journeys: JourneysResult;
+  violations: Violation[];
+  onFilterViolations: (endpoints: string[]) => void;
+}> = ({ journeys, violations, onFilterViolations }) => (
   <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
     <div className="flex items-center gap-2 mb-6">
       <GitBranch className="w-5 h-5 text-teal-400" />
@@ -656,7 +689,7 @@ const JourneysSection: React.FC<{ journeys: JourneysResult }> = ({ journeys }) =
     ) : (
       <div className="space-y-4">
         {journeys.flows.map((journey, i) => (
-          <JourneyCard key={i} journey={journey} />
+          <JourneyCard key={i} journey={journey} violations={violations} onFilterViolations={onFilterViolations} />
         ))}
       </div>
     )}
@@ -679,6 +712,12 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [glossaryOpen, setGlossaryOpen] = useState(false);
+  const [violationFilter, setViolationFilter] = useState<string[] | null>(null);
+
+  const handleFilterViolations = (endpoints: string[]) => {
+    setViolationFilter(endpoints);
+    document.getElementById('contract-violations')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // KPIs / Slow Endpoints / Money Leaking / Priority Fix respect the timeframe picker — 24h reads
   // the detailed endpoint_stats table directly, anything longer reads the pre-aggregated daily
@@ -855,10 +894,6 @@ const Dashboard = () => {
     setViolations(data || []);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
-
   const getViolationTypeColor = (type: string) => {
     switch (type) {
       case 'schema_drift':
@@ -1003,7 +1038,9 @@ const Dashboard = () => {
         {insights && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <SlowEndpointsSection endpoints={insights.endpoints} />
-            {journeys && <JourneysSection journeys={journeys} />}
+            {journeys && (
+              <JourneysSection journeys={journeys} violations={violations} onFilterViolations={handleFilterViolations} />
+            )}
           </div>
         )}
 
@@ -1060,7 +1097,7 @@ const Dashboard = () => {
           </div>
 
           {/* Violations */}
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg p-6">
+          <div id="contract-violations" className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-2">
                 <AlertTriangle className="w-5 h-5 text-indi-purple-400" />
@@ -1075,15 +1112,31 @@ const Dashboard = () => {
               </button>
             </div>
 
-            {violations.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <AlertTriangle className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>No violations detected</p>
-                <p className="text-sm mt-1">Your APIs are running smoothly!</p>
+            {violationFilter && (
+              <div className="flex items-center justify-between mb-4 px-3 py-2 bg-indi-purple-950 border border-indi-purple-800 rounded-lg text-xs">
+                <span className="text-indi-purple-300">
+                  Showing violations for this journey&apos;s endpoints ({violationFilter.join(', ')})
+                </span>
+                <button onClick={() => setViolationFilter(null)} className="text-gray-400 hover:text-white">
+                  Clear filter
+                </button>
               </div>
-            ) : (
+            )}
+
+            {(() => {
+              const visible = violationFilter ? violations.filter((v) => violationFilter.includes(v.endpoint)) : violations;
+              if (visible.length === 0) {
+                return (
+                  <div className="text-center py-8 text-gray-500">
+                    <AlertTriangle className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>{violationFilter ? 'No violations match this filter' : 'No violations detected'}</p>
+                    {!violationFilter && <p className="text-sm mt-1">Your APIs are running smoothly!</p>}
+                  </div>
+                );
+              }
+              return (
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {violations.map((violation) => (
+                {visible.map((violation) => (
                   <div key={violation.id} className="p-3 bg-gray-950 rounded-lg border-l-4 border-indi-purple-500">
                     <div className="flex items-center justify-between mb-2">
                       <span
@@ -1105,7 +1158,8 @@ const Dashboard = () => {
                   </div>
                 ))}
               </div>
-            )}
+              );
+            })()}
           </div>
         </div>
 
