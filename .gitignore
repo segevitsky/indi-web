@@ -13,6 +13,9 @@ dist-ssr
 *.local
 .env
 
+# Local Supabase CLI link state (machine-specific, created by `supabase link`)
+supabase/.temp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

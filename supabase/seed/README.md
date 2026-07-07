@@ -28,6 +28,15 @@ Team used: `017d549d-0278-4227-a91d-a74fbf6bb15d` (the existing test team alread
    table (needed so multi-day percentile views can merge histograms correctly, not just already-
    computed p95s — see the dashboard's timeframe-selector work). **After running this, re-run
    `005` once more** to backfill `latency_buckets` on the rows already seeded.
+8. `008_daily_meridian_data_function.sql` — creates `seed_one_day_of_meridian_data(target_date)`,
+   a reusable function called automatically once a day by `api/seed-daily-meridian-data.ts` via
+   Vercel Cron (see `vercel.json`). **This is the permanent fix for the data going stale** — once
+   this is deployed and `CRON_SECRET` is set in Vercel, manual re-seeding of 003/004/005/006
+   should no longer be needed; the dataset keeps itself current forever, one fresh day at a time,
+   with no pruning (history just keeps accumulating). It also adds recurring real-world calendar
+   events beyond the original one-time review-cycle spike: quarterly reviews (recurring every
+   year now, not just once), open enrollment (November), a holiday lull (late Dec/early Jan), and
+   boosted new-hire onboarding waves (January/September).
 
 Each file is self-contained SQL — run with `supabase db push` if these are added as real
 migrations, or paste directly into the Supabase SQL editor / `psql` in order.
