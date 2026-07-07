@@ -400,8 +400,10 @@ function buildWhatsHappening(e: EndpointInsight): string[] {
   if (e.errorRate > 0) {
     items.push(`about ${Math.round(e.callCount * e.errorRate)} calls failed and had to be retried`);
   }
-  if (isSlow) {
-    items.push(`this endpoint is consistently slow, so every call here counts toward the wasted-time total`);
+  if (e.slowCallCount > 0) {
+    items.push(
+      `${e.slowCallCount.toLocaleString()} of those calls genuinely took longer than ${SLOW_P95_THRESHOLD_MS}ms — only those count toward the wasted-time total, not the whole endpoint`
+    );
   }
   return items;
 }

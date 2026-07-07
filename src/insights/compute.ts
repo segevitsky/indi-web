@@ -69,7 +69,9 @@ function mergeEndpointStats(rows: WasteRow[]): MergedEndpoint[] {
   return Array.from(byKey.values());
 }
 
-function toEndpointInsight(merged: MergedEndpoint): Omit<EndpointInsight, 'wastedLatencyMs' | 'estimatedMonthlyCost'> {
+function toEndpointInsight(
+  merged: MergedEndpoint
+): Omit<EndpointInsight, 'slowCallCount' | 'wastedLatencyMs' | 'estimatedMonthlyCost'> {
   const errorCount = merged.status4xx + merged.status5xx;
   return {
     endpoint: merged.endpoint,
@@ -124,16 +126,16 @@ export function computeInsights(
   // more processing time (and presumably more infra cost) than a fast endpoint's, so treating
   // every call as equally expensive would misrepresent where the money is actually going.
   const totalLatencyMs = merged.reduce((sum, m) => sum + m.latencySum, 0);
-  const wastedLatencyByEndpoint = merged.map((m) => {
+  const slowCallsByEndpoint = merged.map((m) => countSlowCalls(m.latencyBuckets));
+  const wastedLatencyByEndpoint = merged.map((m, i) => {
     const avgLatencyMs = m.callCount > 0 ? m.latencySum / m.callCount : 0;
     const nonSlowWastedCalls = m.duplicateCount + m.status4xx + m.status5xx;
-    const slowCalls = countSlowCalls(m.latencyBuckets);
     // Duplicates/errors are weighted by this endpoint's overall average latency (a reasonable
     // stand-in — we don't track latency separately per category). The slow-tail calls are
     // weighted by the threshold itself, not the endpoint's average (which would understate them,
     // since it's dragged down by the fast majority) or an inflated guess above it — a
     // deliberately conservative floor: these calls took *at least* this long, often more.
-    return nonSlowWastedCalls * avgLatencyMs + slowCalls * SLOW_P95_THRESHOLD_MS;
+    return nonSlowWastedCalls * avgLatencyMs + slowCallsByEndpoint[i] * SLOW_P95_THRESHOLD_MS;
   });
   const totalWastedLatencyMs = wastedLatencyByEndpoint.reduce((sum, ms) => sum + ms, 0);
   const latencyWeightedWasteRatio = totalLatencyMs > 0 ? Math.min(1, totalWastedLatencyMs / totalLatencyMs) : 0;
@@ -149,6 +151,7 @@ export function computeInsights(
   // with the headline number rather than a separate, potentially-inconsistent calculation.
   const endpoints: EndpointInsight[] = baseEndpoints.map((e, i) => ({
     ...e,
+    slowCallCount: slowCallsByEndpoint[i],
     wastedLatencyMs: wastedLatencyByEndpoint[i],
     estimatedMonthlyCost:
       totalWastedLatencyMs > 0 ? (wastedLatencyByEndpoint[i] / totalWastedLatencyMs) * money.monthlySavings : 0,

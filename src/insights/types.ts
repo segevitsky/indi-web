@@ -76,6 +76,9 @@ export interface EndpointInsight {
   p95: number;
   p99: number;
   duplicateCount: number;
+  /** How many of this endpoint's calls actually exceeded the slow threshold (from the real
+   * latency histogram) — not the endpoint's entire volume just because its p95 crossed the line. */
+  slowCallCount: number;
   /** This endpoint's share of the system's total wasted processing time (ms). */
   wastedLatencyMs: number;
   /** This endpoint's proportional slice of `money.monthlySavings` — all endpoints' shares sum
