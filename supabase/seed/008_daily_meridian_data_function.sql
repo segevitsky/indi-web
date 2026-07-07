@@ -36,12 +36,12 @@ DECLARE
   review_error_bump numeric;
   enrollment_mult numeric;
   ep RECORD;
-  call_count bigint;
+  v_call_count bigint;
   err4 bigint;
   err5 bigint;
   dup bigint;
   latency_center int;
-  latency_max numeric;
+  v_latency_max numeric;
   endpoints jsonb := '[
     ["/api/people/:id", "GET", 1800, 3, 180, 0.01, 0.01, 0.002, false],
     ["/api/people/:id", "PATCH", 40, 4, 300, 0.0, 0.01, 0.01, false],
@@ -104,29 +104,29 @@ BEGIN
 
   -- === endpoint_stats ===
   FOR ep IN SELECT * FROM jsonb_array_elements(endpoints) AS e(e) LOOP
-    call_count := GREATEST(0, (
+    v_call_count := GREATEST(0, (
       (ep.e->>2)::bigint * weekday_mult *
       (CASE WHEN (ep.e->>8)::boolean THEN review_mult ELSE 1.0 END) *
       (CASE WHEN (ep.e->>0) = '/api/payroll/salary-history/:id' THEN enrollment_mult ELSE 1.0 END)
     )::bigint);
 
-    CONTINUE WHEN call_count = 0;
+    CONTINUE WHEN v_call_count = 0;
 
-    err4 := (call_count * (ep.e->>6)::numeric)::bigint;
-    err5 := (call_count * ((ep.e->>7)::numeric + (CASE WHEN (ep.e->>8)::boolean THEN review_error_bump ELSE 0 END)))::bigint;
-    dup := (call_count * (ep.e->>5)::numeric)::bigint;
+    err4 := (v_call_count * (ep.e->>6)::numeric)::bigint;
+    err5 := (v_call_count * ((ep.e->>7)::numeric + (CASE WHEN (ep.e->>8)::boolean THEN review_error_bump ELSE 0 END)))::bigint;
+    dup := (v_call_count * (ep.e->>5)::numeric)::bigint;
     latency_center := (ep.e->>3)::int;
-    latency_max := (ep.e->>4)::numeric * (0.9 + random() * 0.3);
+    v_latency_max := (ep.e->>4)::numeric * (0.9 + random() * 0.3);
 
     INSERT INTO endpoint_stats (
       team_id, endpoint, method, window_start, window_end, call_count,
       status_2xx, status_3xx, status_4xx, status_5xx, status_other,
       latency_buckets, latency_sum, latency_max, duplicate_count, field_presence
     ) VALUES (
-      team, ep.e->>0, ep.e->>1, day_start_ms, window_end_ms, call_count,
-      GREATEST(0, call_count - err4 - err5), 0, err4, err5, 0,
-      _fake_latency_buckets(call_count, latency_center),
-      call_count * latency_max * 0.6, latency_max, dup, NULL
+      team, ep.e->>0, ep.e->>1, day_start_ms, window_end_ms, v_call_count,
+      GREATEST(0, v_call_count - err4 - err5), 0, err4, err5, 0,
+      _fake_latency_buckets(v_call_count, latency_center),
+      v_call_count * v_latency_max * 0.6, v_latency_max, dup, NULL
     );
   END LOOP;
 
@@ -258,7 +258,7 @@ BEGIN
            'Response time ' || rt::text || 'ms exceeded maximum 1000ms',
            to_jsonb(1000), to_jsonb(rt), rt, 200,
            target_date::timestamptz + (9 + random() * 8) * interval '1 hour'
-    FROM LATERAL (SELECT (2800 + random() * 1400)::int AS rt) r;
+    FROM LATERAL (SELECT (2800 + random() * 1400)::int AS rt) lat_row;
   END IF;
 
   IF in_review_cycle THEN
