@@ -12,6 +12,14 @@ import type {
   SessionTraceRow,
 } from './types';
 
+/** Only violation types that genuinely represent wasted processing time count toward the dollar
+ * estimate — slow_response (the call itself takes longer) and unexpected_status (an error still
+ * costs compute and typically triggers a client retry, the same reasoning insights/compute.ts
+ * uses for error calls). A type_mismatch or schema_drift is a real, worth-flagging correctness
+ * problem, but it doesn't cost extra processing time on its own, so it shouldn't inflate the
+ * "wasted time" figure — it still counts in violationCount (the display total) either way. */
+const TIME_COST_VIOLATION_TYPES = new Set(['slow_response', 'unexpected_status']);
+
 /** Pages a step fired from among these events, most common first. */
 function rankPagesForStep(events: SequenceEvent[], step: string): string[] {
   const pageCounts = new Map<string, number>();
@@ -292,7 +300,11 @@ export function computeCostAndPerf(
     flowEvents.length > 0 ? flowEvents.reduce((sum, e) => sum + e.durMs, 0) / flowEvents.length : 0;
 
   const violationCount = violations.filter((v) => stepSet.has(v.endpoint)).length;
-  const stepsWithViolations = new Set(violations.filter((v) => stepSet.has(v.endpoint)).map((v) => v.endpoint));
+  const stepsWithViolations = new Set(
+    violations
+      .filter((v) => stepSet.has(v.endpoint) && TIME_COST_VIOLATION_TYPES.has(v.type))
+      .map((v) => v.endpoint)
+  );
   const violationFlaggedEvents = flowEvents.filter((e) => stepsWithViolations.has(e.step));
   const violationWastedCalls = violationFlaggedEvents.length;
   const violationWastedLatencyMs = violationFlaggedEvents.reduce((sum, e) => sum + e.durMs, 0);

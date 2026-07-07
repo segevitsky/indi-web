@@ -247,7 +247,7 @@ describe('computeRepeatedSteps', () => {
           team_id: 'team-1',
           endpoint: '/api/checkout',
           method: 'POST',
-          type: 'latency',
+          type: 'slow_response',
           path: null,
           message: 'slow',
           expected: null,
@@ -264,6 +264,43 @@ describe('computeRepeatedSteps', () => {
       // on top of the 1 excess /api/product/:id call already covered by the repeated-step test above.
       expect(result.methodology.wastedCalls).toBeCloseTo(1 + 2, 5);
       expect(result.methodology.wastedLatencyMs).toBeCloseTo(740 / 7 + 400, 5);
+    });
+
+    it('counts a correctness violation (type_mismatch) toward violationCount but not toward cost', () => {
+      const sessions = mergeSessionsById(repeatFixture);
+      const repeatedSteps = computeRepeatedSteps(flow, sessions);
+      const withoutViolation = computeCostAndPerf(flow, sessions, [], INFRA_COST_PER_MONTH, TOTAL_SYSTEM_LATENCY_MS, repeatedSteps);
+
+      const typeMismatchOnly: Violation[] = [
+        {
+          id: 'v-2',
+          team_id: 'team-1',
+          endpoint: '/api/checkout',
+          method: 'POST',
+          type: 'type_mismatch',
+          path: 'total',
+          message: 'expected number, got string',
+          expected: 'number',
+          actual: 'string',
+          response_time: null,
+          status_code: 201,
+          created_at: '2026-07-01T00:00:00.000Z',
+        },
+      ];
+      const withTypeMismatch = computeCostAndPerf(
+        flow,
+        sessions,
+        typeMismatchOnly,
+        INFRA_COST_PER_MONTH,
+        TOTAL_SYSTEM_LATENCY_MS,
+        repeatedSteps
+      );
+
+      expect(withTypeMismatch.violationCount).toBe(1);
+      // A type_mismatch is a correctness problem, not a time-wasted one — it shouldn't change the
+      // wasted-time figure at all versus having no violations logged.
+      expect(withTypeMismatch.methodology.wastedLatencyMs).toBeCloseTo(withoutViolation.methodology.wastedLatencyMs, 5);
+      expect(withTypeMismatch.estimatedMonthlyCost).toBeCloseTo(withoutViolation.estimatedMonthlyCost, 5);
     });
   });
 });

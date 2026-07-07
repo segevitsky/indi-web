@@ -631,7 +631,9 @@ const JourneyCard: React.FC<{
             {formatCurrency(journey.costAndPerf.estimatedMonthlyCost)}/mo
             <span className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-10 w-64 whitespace-normal bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-300 shadow-xl normal-case">
               Est. from {journey.costAndPerf.methodology.wastedCalls.toFixed(0)} wasted calls in this flow
-              (redundant repeats and/or violation-flagged calls), as a share of your system&apos;s total
+              (redundant repeats and/or calls to a step with a real slowness/error violation — a
+              data-correctness violation like a type mismatch doesn&apos;t count here, since it
+              doesn&apos;t cost extra processing time), as a share of your system&apos;s total
               observed processing time, applied to your reported monthly infra cost.
             </span>
           </span>
