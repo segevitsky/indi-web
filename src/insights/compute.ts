@@ -5,6 +5,16 @@ import type { EndpointInsight, Insights, Kpis, MoneyInsights, WasteRow, WasteSig
 /** p95 above this is considered a "slow" endpoint for waste-signal purposes. Tunable. */
 export const SLOW_P95_THRESHOLD_MS = 1000;
 
+/** How many of an endpoint's calls actually exceeded the slow threshold, from the real latency
+ * histogram — not "the whole endpoint's volume, because its p95 crossed the line." p95 by
+ * definition only describes the worst 5%; the other 95% could be perfectly fast, and shouldn't
+ * be counted as wasted just because they share an endpoint with a slow tail. */
+function countSlowCalls(latencyBuckets: number[]): number {
+  const thresholdIndex = LATENCY_BUCKET_BOUNDS.findIndex((bound) => bound === SLOW_P95_THRESHOLD_MS);
+  if (thresholdIndex === -1) return 0;
+  return latencyBuckets.slice(thresholdIndex + 1).reduce((sum, count) => sum + count, 0);
+}
+
 /** Weights for the health-score formula below. Not specified by the build plan — tune freely. */
 const HEALTH_SCORE_ERROR_WEIGHT = 1;
 const HEALTH_SCORE_WASTE_WEIGHT = 0.5;
@@ -84,9 +94,7 @@ export function computeInsights(
   const totalCalls = merged.reduce((sum, m) => sum + m.callCount, 0);
   const errorCalls = merged.reduce((sum, m) => sum + m.status4xx + m.status5xx, 0);
   const duplicateCalls = merged.reduce((sum, m) => sum + m.duplicateCount, 0);
-  const slowEndpointVolume = baseEndpoints
-    .filter((e) => e.p95 > SLOW_P95_THRESHOLD_MS)
-    .reduce((sum, e) => sum + e.callCount, 0);
+  const slowEndpointVolume = merged.reduce((sum, m) => sum + countSlowCalls(m.latencyBuckets), 0);
 
   const waste: WasteSignals = {
     duplicateCalls,
@@ -116,11 +124,16 @@ export function computeInsights(
   // more processing time (and presumably more infra cost) than a fast endpoint's, so treating
   // every call as equally expensive would misrepresent where the money is actually going.
   const totalLatencyMs = merged.reduce((sum, m) => sum + m.latencySum, 0);
-  const wastedLatencyByEndpoint = merged.map((m, i) => {
+  const wastedLatencyByEndpoint = merged.map((m) => {
     const avgLatencyMs = m.callCount > 0 ? m.latencySum / m.callCount : 0;
-    const wastedCalls =
-      m.duplicateCount + m.status4xx + m.status5xx + (baseEndpoints[i].p95 > SLOW_P95_THRESHOLD_MS ? m.callCount : 0);
-    return wastedCalls * avgLatencyMs;
+    const nonSlowWastedCalls = m.duplicateCount + m.status4xx + m.status5xx;
+    const slowCalls = countSlowCalls(m.latencyBuckets);
+    // Duplicates/errors are weighted by this endpoint's overall average latency (a reasonable
+    // stand-in — we don't track latency separately per category). The slow-tail calls are
+    // weighted by the threshold itself, not the endpoint's average (which would understate them,
+    // since it's dragged down by the fast majority) or an inflated guess above it — a
+    // deliberately conservative floor: these calls took *at least* this long, often more.
+    return nonSlowWastedCalls * avgLatencyMs + slowCalls * SLOW_P95_THRESHOLD_MS;
   });
   const totalWastedLatencyMs = wastedLatencyByEndpoint.reduce((sum, ms) => sum + ms, 0);
   const latencyWeightedWasteRatio = totalLatencyMs > 0 ? Math.min(1, totalWastedLatencyMs / totalLatencyMs) : 0;

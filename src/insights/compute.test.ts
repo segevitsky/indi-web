@@ -25,25 +25,27 @@ describe('computeInsights', () => {
     const insights = computeInsights(endpointStatsFixture, violationsFixture, null);
 
     // total calls: 100 + 80 + 40 = 220; errors: (5+3) + (1+1) + 5 = 15; duplicates: 12+8 = 20
-    // slow endpoint volume: only /api/reports/export has p95 > 1000ms -> its 40 calls
+    // slow endpoint volume: only calls that actually landed in a slow bucket (>1000ms) count —
+    // /api/reports/export's histogram [0,0,0,0,5,10,15,8,2,0] has 8+2+0=10 calls past that line,
+    // not its entire 40-call volume just because its p95 happens to cross the threshold.
     expect(insights.kpis.totalCallsPerDay).toBe(220);
     expect(insights.waste.duplicateCalls).toBe(20);
     expect(insights.waste.errorRetryVolume).toBe(15);
-    expect(insights.waste.slowEndpointVolume).toBe(40);
-    expect(insights.kpis.wasteRatio).toBeCloseTo(75 / 220, 5);
+    expect(insights.waste.slowEndpointVolume).toBe(10);
+    expect(insights.kpis.wasteRatio).toBeCloseTo(45 / 220, 5);
     expect(insights.kpis.errorRate).toBeCloseTo(15 / 220, 5);
     expect(insights.violationCount).toBe(violationsFixture.length);
   });
 
   it('derives monthly savings from a latency-weighted waste ratio, with a visible breakdown', () => {
     const withCost = computeInsights(endpointStatsFixture, violationsFixture, 1000);
-    // users/:id: 30 wasted calls x 23.33ms avg = 700ms wasted. reports/export is flagged slow
-    // (p95 2500 > 1000), so its whole 40-call volume counts as wasted: 45 wasted calls x 1200ms = 54000ms.
-    // total wasted 54700ms / total latency 52200ms > 1, so the ratio (and therefore the dollar
-    // figure) is capped at 100% of the reported infra cost, not an arbitrary multiple of it.
-    expect(withCost.money.methodology.totalWastedLatencyMs).toBeCloseTo(54700, 5);
+    // users/:id: 30 wasted (non-slow) calls x 23.33ms avg = 700ms wasted.
+    // reports/export: 5 wasted (non-slow) calls x 1200ms avg = 6000ms, plus its 10 genuinely-slow
+    // calls (from the histogram, not the whole 40) x the 1000ms threshold floor = 10000ms.
+    // Total: 700 + 6000 + 10000 = 16700ms, well under the 52200ms total — no cap needed here.
+    expect(withCost.money.methodology.totalWastedLatencyMs).toBeCloseTo(16700, 5);
     expect(withCost.money.methodology.totalLatencyMs).toBeCloseTo(52200, 5);
-    expect(withCost.money.monthlySavings).toBeCloseTo(1000, 5);
+    expect(withCost.money.monthlySavings).toBeCloseTo((16700 / 52200) * 1000, 5);
 
     const withoutCost = computeInsights(endpointStatsFixture, violationsFixture, null);
     expect(withoutCost.money.monthlySavings).toBe(0);
@@ -57,10 +59,10 @@ describe('computeInsights', () => {
     const reports = insights.endpoints.find((e) => e.endpoint === '/api/reports/export')!;
 
     expect(users.wastedLatencyMs).toBeCloseTo(700, 5);
-    expect(reports.wastedLatencyMs).toBeCloseTo(54000, 5);
+    expect(reports.wastedLatencyMs).toBeCloseTo(16000, 5);
 
-    // reports/export is the slow, flagged endpoint — it should carry the overwhelming majority
-    // of the dollar figure despite users/:id having more raw wasted calls.
+    // reports/export is still the dominant contributor (its slow tail + errors), despite
+    // users/:id having more raw wasted calls.
     expect(reports.estimatedMonthlyCost).toBeGreaterThan(users.estimatedMonthlyCost * 10);
 
     const totalAllocated = insights.endpoints.reduce((sum, e) => sum + e.estimatedMonthlyCost, 0);
@@ -155,6 +157,45 @@ describe('computeInsights', () => {
     const fromRollups = computeInsights(rollupFixture, violationsFixture, 1000);
 
     expect(fromRollups).toEqual(fromStats);
+  });
+
+  it('only counts the genuinely slow calls, not an endpoint\'s entire volume, when p95 crosses the threshold', () => {
+    const now = 1735689600000;
+    const rows: EndpointStatsRow[] = [
+      {
+        id: 'mostly-fast-with-a-slow-tail',
+        team_id: 'team-1',
+        endpoint: '/api/mixed',
+        method: 'GET',
+        window_start: now,
+        window_end: now + 60000,
+        call_count: 1000,
+        status_2xx: 1000,
+        status_3xx: 0,
+        status_4xx: 0,
+        status_5xx: 0,
+        status_other: 0,
+        // 940 calls fast (50ms bucket), 60 calls genuinely slow (2500ms bucket) — only 6% of
+        // calls are actually slow, but that's just enough to push p95 (the 950th call) over the
+        // 1000ms line, since cumulative count only reaches 950 within the slow bucket.
+        latency_buckets: [0, 0, 940, 0, 0, 0, 0, 60, 0, 0],
+        latency_sum: 940 * 50 + 60 * 2500, // 47000 + 150000 = 197000
+        latency_max: 2600,
+        duplicate_count: 0,
+        field_presence: null,
+        created_at: '2026-07-01T00:00:00.000Z',
+      },
+    ];
+
+    const insights = computeInsights(rows, [], 1000);
+    const endpoint = insights.endpoints[0];
+
+    expect(endpoint.p95).toBeGreaterThan(1000); // confirms this endpoint is flagged "slow" at all
+    // Only the 60 genuinely-slow calls count as wasted volume — not all 1000.
+    expect(insights.waste.slowEndpointVolume).toBe(60);
+    // Wasted latency: 60 slow calls x the 1000ms threshold floor (not the whole endpoint x its
+    // average, and not the 0 non-slow wasted calls, since duplicates/errors are both 0 here).
+    expect(endpoint.wastedLatencyMs).toBeCloseTo(60 * 1000, 5);
   });
 
   it('returns an all-zero Insights object for empty input, never NaN', () => {
