@@ -11,6 +11,36 @@ const MAX_ROLLUP_ROWS = 5000;
 const MAX_SESSION_ROWS = 8000;
 /** Violations are comparatively rare, but fetched over the same long window for consistency. */
 const MAX_VIOLATION_ROWS = 2000;
+/** Supabase/PostgREST caps a single response at a server-side max-rows setting (this project's
+ * is 1000, confirmed empirically) regardless of .limit() — so any table that can realistically
+ * exceed that (rollups now, at 1380+ rows and growing forever since we deliberately don't prune;
+ * sessions, at 3000+) needs to page through in batches, not just ask for a bigger single .limit(). */
+const PAGE_SIZE = 900;
+
+/** Pages through a query in PAGE_SIZE batches (ordered newest-first by the caller) until either
+ * a batch comes back short (no more rows) or `maxRows` is reached. */
+async function fetchAllPages<T>(
+  buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  maxRows: number
+): Promise<T[]> {
+  const results: T[] = [];
+  let offset = 0;
+
+  while (offset < maxRows) {
+    const to = Math.min(offset + PAGE_SIZE, maxRows) - 1;
+    const { data, error } = await buildQuery(offset, to);
+    if (error) {
+      console.error('Error paging through query:', error);
+      break;
+    }
+    if (!data || data.length === 0) break;
+    results.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  return results;
+}
 
 export async function fetchEndpointStats(teamId: string, sinceMs: number): Promise<EndpointStatsRow[]> {
   const { data, error } = await supabase
@@ -30,22 +60,19 @@ export async function fetchEndpointStats(teamId: string, sinceMs: number): Promi
 }
 
 export async function fetchSessionTraces(teamId: string, sinceMs: number): Promise<SessionTraceRow[]> {
-  const { data, error } = await supabase
-    .from('session_traces')
-    .select('*')
-    .eq('team_id', teamId)
-    .gte('started_at', sinceMs)
-    // Newest first — same reasoning as fetchDailyRollups: if the row cap is ever hit, it should
-    // drop old history, not the recent sessions the dashboard actually cares about.
-    .order('started_at', { ascending: false })
-    .limit(MAX_SESSION_ROWS);
-
-  if (error) {
-    console.error('Error fetching session traces:', error);
-    return [];
-  }
-
-  return data || [];
+  // Newest first, paged: a 90-day pull can exceed this project's ~1000-row server-side cap, and
+  // paging (rather than a bigger .limit()) is the only way to actually get past it.
+  return fetchAllPages<SessionTraceRow>(
+    (from, to) =>
+      supabase
+        .from('session_traces')
+        .select('*')
+        .eq('team_id', teamId)
+        .gte('started_at', sinceMs)
+        .order('started_at', { ascending: false })
+        .range(from, to),
+    MAX_SESSION_ROWS
+  );
 }
 
 export async function fetchViolations(teamId: string, sinceMs: number): Promise<Violation[]> {
@@ -67,22 +94,18 @@ export async function fetchViolations(teamId: string, sinceMs: number): Promise<
 
 export async function fetchDailyRollups(teamId: string, sinceMs: number): Promise<EndpointDailyRollupRow[]> {
   const sinceDate = new Date(sinceMs).toISOString().slice(0, 10);
-  const { data, error } = await supabase
-    .from('endpoint_daily_rollups')
-    .select('*')
-    .eq('team_id', teamId)
-    .gte('day', sinceDate)
-    // Newest first: Supabase/PostgREST silently caps responses at a server-side max-rows
-    // setting (commonly 1000) regardless of the .limit() requested here — ordering ascending
-    // meant a truncated response kept the *oldest* rows and dropped the most recent ones,
-    // which is exactly backwards for a dashboard that cares most about recent data.
-    .order('day', { ascending: false })
-    .limit(MAX_ROLLUP_ROWS);
-
-  if (error) {
-    console.error('Error fetching daily rollups:', error);
-    return [];
-  }
-
-  return data || [];
+  // Newest first, paged: with no pruning (deliberate — see the daily-refresh work), this table
+  // only grows, and already exceeds the ~1000-row server-side cap — a bigger .limit() alone
+  // can't get past that, only paging can.
+  return fetchAllPages<EndpointDailyRollupRow>(
+    (from, to) =>
+      supabase
+        .from('endpoint_daily_rollups')
+        .select('*')
+        .eq('team_id', teamId)
+        .gte('day', sinceDate)
+        .order('day', { ascending: false })
+        .range(from, to),
+    MAX_ROLLUP_ROWS
+  );
 }
