@@ -25,10 +25,10 @@ import { signOut, getUser, getTeamForUser, createTeamForUser } from './supabase/
 import { getInfraCostPerMonth } from './supabase/teamSettings';
 import { computeInsights, SLOW_P95_THRESHOLD_MS } from './insights/compute';
 import { computeWeeklyTrend } from './insights/trends';
-import { fetchDailyRollups, fetchEndpointStats, fetchSessionTraces } from './insights/fetchLive';
+import { fetchDailyRollups, fetchEndpointStats, fetchSessionTraces, fetchViolations } from './insights/fetchLive';
 import type { EndpointDailyRollupRow, EndpointInsight, EndpointStatsRow, Insights, WeeklyTrendPoint } from './insights/types';
 import { mineJourneys } from './journeys/mine';
-import type { Funnel, JourneyFlow, JourneysResult } from './journeys/types';
+import type { Funnel, JourneyFlow, JourneysResult, SessionTraceRow } from './journeys/types';
 import type { User } from '@supabase/supabase-js';
 
 const TIME_RANGE_MS = 24 * 60 * 60 * 1000;
@@ -42,6 +42,11 @@ const TIME_RANGE_OPTIONS: { value: TimeRange; label: string }[] = [
   { value: '90d', label: '90d' },
 ];
 const TIME_RANGE_DAYS: Record<Exclude<TimeRange, '24h'>, number> = { '7d': 7, '30d': 30, '90d': 90 };
+
+function rangeSinceMs(range: TimeRange): number {
+  if (range === '24h') return Date.now() - TIME_RANGE_MS;
+  return Date.now() - TIME_RANGE_DAYS[range] * 24 * 60 * 60 * 1000;
+}
 
 /** Ranks endpoints by measured waste contribution. Used for "#1 Priority Fix" and "Quick Wins"
  * until M4 wires in Claude-generated recommendations — this is real computed data, not a placeholder. */
@@ -664,12 +669,13 @@ const JourneysSection: React.FC<{
   journeys: JourneysResult;
   violations: Violation[];
   onFilterViolations: (endpoints: string[]) => void;
-}> = ({ journeys, violations, onFilterViolations }) => (
+  timeRange: TimeRange;
+}> = ({ journeys, violations, onFilterViolations, timeRange }) => (
   <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
     <div className="flex items-center gap-2 mb-6">
       <GitBranch className="w-5 h-5 text-teal-400" />
       <h3 className="text-lg font-bold text-white">Journeys</h3>
-      <span className="text-xs text-gray-600">(last 24h, independent of the timeframe above)</span>
+      <span className="text-xs text-gray-600">({TIME_RANGE_SUBLABELS[timeRange]})</span>
       <SectionHelp>
         <p>
           Each flow is a sequence of API calls made during real user sessions, most frequent first.
@@ -687,7 +693,7 @@ const JourneysSection: React.FC<{
       </SectionHelp>
     </div>
     {journeys.flows.length === 0 ? (
-      <p className="text-sm text-gray-500">Not enough session data in the last 24h to mine journeys yet.</p>
+      <p className="text-sm text-gray-500">Not enough session data in the {TIME_RANGE_SUBLABELS[timeRange]} to mine journeys yet.</p>
     ) : (
       <div className="space-y-4">
         {journeys.flows.map((journey, i) => (
@@ -703,12 +709,12 @@ const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
   const [indicators, setIndicators] = useState<Indicator[]>([]);
-  const [violations, setViolations] = useState<Violation[]>([]);
   const [rawEndpointStats, setRawEndpointStats] = useState<EndpointStatsRow[]>([]);
+  const [rawSessionTraces, setRawSessionTraces] = useState<SessionTraceRow[]>([]);
+  const [rawViolations, setRawViolations] = useState<Violation[]>([]);
   const [rawDailyRollups, setRawDailyRollups] = useState<EndpointDailyRollupRow[]>([]);
   const [infraCostPerMonth, setInfraCostPerMonth] = useState<number | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
-  const [journeys, setJourneys] = useState<JourneysResult | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationsResponse | null>(null);
   const [trend, setTrend] = useState<WeeklyTrendPoint[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -724,18 +730,37 @@ const Dashboard = () => {
   // KPIs / Slow Endpoints / Money Leaking / Priority Fix respect the timeframe picker — 24h reads
   // the detailed endpoint_stats table directly, anything longer reads the pre-aggregated daily
   // rollups (already fetched in full for Trends) filtered down to the selected window. Journeys
-  // and AI Recommendations intentionally stay pinned to the fixed 24h view (see plan/discussion).
+  // now follows the same picker too (see below) — only AI Recommendations stays pinned to a fixed
+  // 24h view (a deliberate choice, unrelated to this — see plan/discussion).
+  const scopedViolations = useMemo(() => {
+    const sinceMs = rangeSinceMs(timeRange);
+    return rawViolations.filter((v) => new Date(v.created_at).getTime() >= sinceMs);
+  }, [timeRange, rawViolations]);
+
   const insights = useMemo<Insights | null>(() => {
     if (rawEndpointStats.length === 0 && rawDailyRollups.length === 0) return null;
     if (timeRange === '24h') {
-      return computeInsights(rawEndpointStats, violations, infraCostPerMonth);
+      return computeInsights(rawEndpointStats, scopedViolations, infraCostPerMonth);
     }
-    const sinceDate = new Date(Date.now() - TIME_RANGE_DAYS[timeRange] * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 10);
+    const sinceDate = new Date(rangeSinceMs(timeRange)).toISOString().slice(0, 10);
     const windowed = rawDailyRollups.filter((r) => r.day >= sinceDate);
-    return computeInsights(windowed, violations, infraCostPerMonth);
-  }, [timeRange, rawEndpointStats, rawDailyRollups, violations, infraCostPerMonth]);
+    return computeInsights(windowed, scopedViolations, infraCostPerMonth);
+  }, [timeRange, rawEndpointStats, rawDailyRollups, scopedViolations, infraCostPerMonth]);
+
+  // Journeys mines the actual session sequences (no rollup shortcut is possible — see plan), so
+  // extending it just means filtering the already-fetched 90-day session pool to the picker's
+  // window and re-mining, instead of a fixed 24h fetch.
+  const journeys = useMemo<JourneysResult | null>(() => {
+    if (rawSessionTraces.length === 0) return null;
+    const sinceMs = rangeSinceMs(timeRange);
+    const scopedSessions = rawSessionTraces.filter((s) => s.started_at >= sinceMs);
+    return mineJourneys(
+      scopedSessions,
+      scopedViolations,
+      infraCostPerMonth,
+      insights?.money.methodology.totalLatencyMs ?? 0
+    );
+  }, [timeRange, rawSessionTraces, scopedViolations, infraCostPerMonth, insights]);
 
   // Load user, team, indicators/violations, and computed insights/journeys.
   useEffect(() => {
@@ -763,37 +788,33 @@ const Dashboard = () => {
 
           setIndicators(indicatorsData || []);
 
-          const { data: violationsData } = await supabase
-            .from('violations')
-            .select('*')
-            .eq('team_id', userTeam.id)
-            .order('created_at', { ascending: false })
-            .limit(50);
-
-          setViolations(violationsData || []);
-
           const sinceMs = Date.now() - TIME_RANGE_MS;
-          const [endpointStats, sessionTraces, infraCostPerMonth, dailyRollups] = await Promise.all([
+          const trendSinceMs = Date.now() - TREND_RANGE_MS;
+          const [endpointStats, sessionTraces, allViolations, infraCostPerMonth, dailyRollups] = await Promise.all([
             fetchEndpointStats(userTeam.id, sinceMs),
-            fetchSessionTraces(userTeam.id, sinceMs),
+            fetchSessionTraces(userTeam.id, trendSinceMs),
+            fetchViolations(userTeam.id, trendSinceMs),
             getInfraCostPerMonth(userTeam.id),
-            fetchDailyRollups(userTeam.id, Date.now() - TREND_RANGE_MS),
+            fetchDailyRollups(userTeam.id, trendSinceMs),
           ]);
 
-          // Journeys and AI Recommendations always use the fixed 24h view, regardless of the
-          // timeframe picker (see JourneysSection's note and the plan for why).
-          const computedInsights = computeInsights(endpointStats, violationsData || [], infraCostPerMonth);
+          setRawEndpointStats(endpointStats);
+          setRawSessionTraces(sessionTraces);
+          setRawViolations(allViolations);
+          setRawDailyRollups(dailyRollups);
+          setInfraCostPerMonth(infraCostPerMonth);
+          setTrend(computeWeeklyTrend(dailyRollups));
+
+          // AI Recommendations always uses a fixed 24h view, regardless of the timeframe picker
+          // (a deliberate choice — re-running the Claude call on every toggle would be slow/costly).
+          const violations24h = allViolations.filter((v) => new Date(v.created_at).getTime() >= sinceMs);
+          const computedInsights = computeInsights(endpointStats, violations24h, infraCostPerMonth);
           const computedJourneys = mineJourneys(
-            sessionTraces,
-            violationsData || [],
+            sessionTraces.filter((s) => s.started_at >= sinceMs),
+            violations24h,
             infraCostPerMonth,
             computedInsights.money.methodology.totalLatencyMs
           );
-          setRawEndpointStats(endpointStats);
-          setRawDailyRollups(dailyRollups);
-          setInfraCostPerMonth(infraCostPerMonth);
-          setJourneys(computedJourneys);
-          setTrend(computeWeeklyTrend(dailyRollups));
 
           // AI recommendations are best-effort — the dashboard above already works without them.
           try {
@@ -837,7 +858,7 @@ const Dashboard = () => {
           filter: `team_id=eq.${team.id}`,
         },
         (payload) => {
-          setViolations((prev) => [payload.new as Violation, ...prev].slice(0, 50));
+          setRawViolations((prev) => [payload.new as Violation, ...prev]);
         }
       )
       .subscribe();
@@ -887,13 +908,8 @@ const Dashboard = () => {
 
   const refreshViolations = async () => {
     if (!team) return;
-    const { data } = await supabase
-      .from('violations')
-      .select('*')
-      .eq('team_id', team.id)
-      .order('created_at', { ascending: false })
-      .limit(50);
-    setViolations(data || []);
+    const data = await fetchViolations(team.id, Date.now() - TREND_RANGE_MS);
+    setRawViolations(data);
   };
 
   const getViolationTypeColor = (type: string) => {
@@ -1041,7 +1057,12 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <SlowEndpointsSection endpoints={insights.endpoints} />
             {journeys && (
-              <JourneysSection journeys={journeys} violations={violations} onFilterViolations={handleFilterViolations} />
+              <JourneysSection
+                journeys={journeys}
+                violations={scopedViolations}
+                onFilterViolations={handleFilterViolations}
+                timeRange={timeRange}
+              />
             )}
           </div>
         )}
@@ -1126,7 +1147,9 @@ const Dashboard = () => {
             )}
 
             {(() => {
-              const visible = violationFilter ? violations.filter((v) => violationFilter.includes(v.endpoint)) : violations;
+              const visible = violationFilter
+                ? rawViolations.filter((v) => violationFilter.includes(v.endpoint))
+                : rawViolations;
               if (visible.length === 0) {
                 return (
                   <div className="text-center py-8 text-gray-500">
