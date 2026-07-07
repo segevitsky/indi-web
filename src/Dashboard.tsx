@@ -18,11 +18,12 @@ import {
   Sparkles,
   HelpCircle,
   TrendingUp,
+  X,
 } from 'lucide-react';
 import { supabase, type Team, type Indicator, type Violation } from './supabase/config';
 import { signOut, getUser, getTeamForUser, createTeamForUser } from './supabase/auth';
 import { getInfraCostPerMonth } from './supabase/teamSettings';
-import { computeInsights } from './insights/compute';
+import { computeInsights, SLOW_P95_THRESHOLD_MS } from './insights/compute';
 import { computeWeeklyTrend } from './insights/trends';
 import { fetchDailyRollups, fetchEndpointStats, fetchSessionTraces } from './insights/fetchLive';
 import type { EndpointDailyRollupRow, EndpointInsight, EndpointStatsRow, Insights, WeeklyTrendPoint } from './insights/types';
@@ -41,8 +42,6 @@ const TIME_RANGE_OPTIONS: { value: TimeRange; label: string }[] = [
   { value: '90d', label: '90d' },
 ];
 const TIME_RANGE_DAYS: Record<Exclude<TimeRange, '24h'>, number> = { '7d': 7, '30d': 30, '90d': 90 };
-/** Mirrors src/insights/compute.ts's own slow-endpoint threshold, for consistent labeling. */
-const SLOW_P95_THRESHOLD_MS = 1000;
 
 /** Ranks endpoints by measured waste contribution. Used for "#1 Priority Fix" and "Quick Wins"
  * until M4 wires in Claude-generated recommendations — this is real computed data, not a placeholder. */
@@ -362,6 +361,107 @@ const AIRecommendationsSection: React.FC<{ recommendations: RecommendationItem[]
   </div>
 );
 
+const TermTooltip: React.FC<{ term: string; explanation: string }> = ({ term, explanation }) => (
+  <span className="group relative underline decoration-dotted cursor-help">
+    {term}
+    <span className="absolute left-0 bottom-full mb-1 hidden group-hover:block z-10 w-56 whitespace-normal bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-300 shadow-xl normal-case">
+      {explanation}
+    </span>
+  </span>
+);
+
+/** Plain-English bullets for what's actually happening on this endpoint — only the signals that
+ * are genuinely present, so a healthy-except-for-one-thing endpoint doesn't get told it has
+ * problems it doesn't have. */
+function buildWhatsHappening(e: EndpointInsight): string[] {
+  const items: string[] = [];
+  const isSlow = e.p95 > SLOW_P95_THRESHOLD_MS;
+
+  items.push(
+    `${e.callCount.toLocaleString()} calls, typically ${e.p50}ms${isSlow ? ` — but the worst 5% take ${e.p95}ms or more` : ''}`
+  );
+  if (e.duplicateCount > 0) {
+    items.push(`${e.duplicateCount} of those calls were fired twice within the same second — unnecessary repeats`);
+  }
+  if (e.errorRate > 0) {
+    items.push(`about ${Math.round(e.callCount * e.errorRate)} calls failed and had to be retried`);
+  }
+  if (isSlow) {
+    items.push(`this endpoint is consistently slow, so every call here counts toward the wasted-time total`);
+  }
+  return items;
+}
+
+/** A generic-but-honest fix hint keyed off which signal(s) are actually present — not a
+ * fabricated, overly-specific suggestion we haven't verified applies here. */
+function buildFixHint(e: EndpointInsight): string | null {
+  const hints: string[] = [];
+  if (e.p95 > SLOW_P95_THRESHOLD_MS) hints.push('look into why this endpoint is slow (often a database query)');
+  if (e.duplicateCount > 0) hints.push('add short-lived caching or de-duplicate repeated calls');
+  if (e.errorRate > 0) hints.push('fix the underlying failure causing retries');
+  return hints.length > 0 ? hints.join('; ') : null;
+}
+
+const GlossaryModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+    <div
+      className="bg-gray-900 border border-gray-800 rounded-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto"
+      onClick={(ev) => ev.stopPropagation()}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-white">Dashboard Glossary</h3>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-300" aria-label="Close glossary">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      <div className="space-y-4 text-sm">
+        <div>
+          <p className="font-semibold text-gray-100">p95 (95th percentile)</p>
+          <p className="text-gray-400">
+            Line up 100 typical calls from fastest to slowest — p95 is how long the 95th one took. It's how slow
+            things are for the unlucky worst 5%, not the average.
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold text-gray-100">Duplicates</p>
+          <p className="text-gray-400">
+            The same call fired twice within about a second — a flat count across everything measured, not "per
+            visit." (A different signal, shown in Journeys, catches a call being needlessly repeated across one
+            person's whole visit.)
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold text-gray-100">Error rate</p>
+          <p className="text-gray-400">The share of calls that failed. A failed call usually costs you twice — once for the failure, once for the retry.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-gray-100">Wasted time (ms)</p>
+          <p className="text-gray-400">
+            Duplicate, failed, and consistently-slow calls, added up and weighted by how long each actually took —
+            our estimate of how much of your system's processing time went to waste, not a reading of your actual
+            cloud bill.
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold text-gray-100">Waste Ratio</p>
+          <p className="text-gray-400">
+            What share of your total <em>traffic</em> looks wasteful — a different number from Monthly Savings on
+            purpose, since a slow call and a fast call count the same here even though they don't cost the same.
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold text-gray-100">Monthly Savings</p>
+          <p className="text-gray-400">
+            Your reported monthly infra cost, multiplied by the share of your system's processing time that looks
+            wasted (weighted by how slow each wasteful call is) — an estimate based on a number you gave us, not a
+            reading of your actual cloud bill.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const MoneyLeakingSection: React.FC<{ endpoints: EndpointInsight[]; timeRange: TimeRange }> = ({
   endpoints,
   timeRange,
@@ -378,27 +478,48 @@ const MoneyLeakingSection: React.FC<{ endpoints: EndpointInsight[]; timeRange: T
         <p className="text-sm text-gray-500">No endpoint data in the {TIME_RANGE_SUBLABELS[timeRange]}.</p>
       ) : (
         <div className="space-y-3 max-h-96 overflow-y-auto">
-          {sorted.map((e) => (
-            <div key={`${e.method} ${e.endpoint}`} className="p-3 bg-gray-950 rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <code className="text-sm font-mono text-gray-200">
-                  {e.method} {e.endpoint}
-                </code>
-                <span className="text-xs text-gray-500">{e.callCount.toLocaleString()} calls</span>
+          {sorted.map((e) => {
+            const whatsHappening = buildWhatsHappening(e);
+            const fixHint = buildFixHint(e);
+            return (
+              <div key={`${e.method} ${e.endpoint}`} className="p-3 bg-gray-950 rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <code className="text-sm font-mono text-gray-200">
+                    {e.method} {e.endpoint}
+                  </code>
+                  <span className="text-xs text-gray-500">{e.callCount.toLocaleString()} calls</span>
+                </div>
+                <div className="flex gap-4 text-xs text-gray-500 mb-2">
+                  <span>
+                    {e.duplicateCount}{' '}
+                    <TermTooltip term="duplicates" explanation="Same call fired twice within about a second — a flat count across everything measured, not per session." />
+                  </span>
+                  <span>{(e.errorRate * 100).toFixed(1)}% errors</span>
+                  <span>
+                    <TermTooltip term="p95" explanation="95% of calls are faster than this — how slow it is for the unlucky worst 5%, not the average." />{' '}
+                    {e.p95}ms
+                  </span>
+                </div>
+                <ul className="text-xs text-gray-400 space-y-0.5 mb-2 list-disc list-inside">
+                  {whatsHappening.map((line, i) => (
+                    <li key={i}>{line}</li>
+                  ))}
+                </ul>
+                {fixHint && (
+                  <p className="text-xs text-gray-300 mb-2">
+                    <span className="text-gray-500">Fix: </span>
+                    {fixHint}
+                  </p>
+                )}
+                {e.estimatedMonthlyCost > 0 && (
+                  <p className="text-xs text-indi-purple-300">
+                    {formatCurrency(e.estimatedMonthlyCost)}/mo now &middot; up to {formatCurrency(e.estimatedMonthlyCost * 12)}/year if
+                    fully resolved
+                  </p>
+                )}
               </div>
-              <div className="flex gap-4 text-xs text-gray-500">
-                <span>{e.duplicateCount} duplicates</span>
-                <span>{(e.errorRate * 100).toFixed(1)}% errors</span>
-                <span>p95 {e.p95}ms</span>
-              </div>
-              {e.estimatedMonthlyCost > 0 && (
-                <p className="text-xs text-indi-purple-300 mt-2">
-                  {formatCurrency(e.estimatedMonthlyCost)}/mo &middot; {Math.round(e.wastedLatencyMs).toLocaleString()}ms
-                  of the total wasted time
-                </p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -552,6 +673,7 @@ const Dashboard = () => {
   const [trend, setTrend] = useState<WeeklyTrendPoint[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [glossaryOpen, setGlossaryOpen] = useState(false);
 
   // KPIs / Slow Endpoints / Money Leaking / Priority Fix respect the timeframe picker — 24h reads
   // the detailed endpoint_stats table directly, anything longer reads the pre-aggregated daily
@@ -770,6 +892,14 @@ const Dashboard = () => {
               <span className="ml-2 text-lg font-semibold text-white">Dashboard</span>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setGlossaryOpen(true)}
+                className="p-2 text-gray-400 hover:text-white transition-colors"
+                title="Dashboard glossary"
+                aria-label="Open dashboard glossary"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </button>
               <Link to="/settings" className="p-2 text-gray-400 hover:text-white transition-colors" title="Settings">
                 <Settings className="w-5 h-5" />
               </Link>
@@ -991,6 +1121,7 @@ indi.watch('/api/orders', { maxResponseTime: 500 });`}</code>
           </div>
         </div>
       </div>
+      {glossaryOpen && <GlossaryModal onClose={() => setGlossaryOpen(false)} />}
     </div>
   );
 };

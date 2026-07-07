@@ -3,7 +3,7 @@ import { estimatePercentile, LATENCY_BUCKET_BOUNDS } from './percentile';
 import type { EndpointInsight, Insights, Kpis, MoneyInsights, WasteRow, WasteSignals } from './types';
 
 /** p95 above this is considered a "slow" endpoint for waste-signal purposes. Tunable. */
-const SLOW_P95_THRESHOLD_MS = 1000;
+export const SLOW_P95_THRESHOLD_MS = 1000;
 
 /** Weights for the health-score formula below. Not specified by the build plan — tune freely. */
 const HEALTH_SCORE_ERROR_WEIGHT = 1;
