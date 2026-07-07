@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Layout,
@@ -87,6 +88,59 @@ const SEVERITY_COLOR: Record<RecommendationItem['severity'], string> = {
   low: 'bg-gray-800 text-gray-300',
 };
 
+/** Shared hover tooltip, rendered via a portal into document.body rather than positioned
+ * relative to its trigger — this is what keeps it from getting clipped by an ancestor's
+ * `overflow-y-auto` (a plain absolute-positioned tooltip inside a scroll container gets cut off
+ * at that container's edge, which is exactly what was happening before). Position is computed
+ * from the trigger's real on-screen location on hover, clamped horizontally to the viewport, and
+ * flipped to render below instead of above when there isn't enough room above it. */
+const Tooltip: React.FC<{
+  children: React.ReactNode;
+  content: React.ReactNode;
+  width?: number;
+  className?: string;
+  onClick?: () => void;
+}> = ({ children, content, width = 256, className, onClick }) => {
+  const triggerRef = useRef<HTMLSpanElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; above: boolean } | null>(null);
+
+  const show = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const left = Math.max(8, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 8));
+    const above = rect.top > 150;
+    setPos({ left, top: above ? rect.top - 8 : rect.bottom + 8, above });
+  };
+
+  return (
+    <span
+      ref={triggerRef}
+      onMouseEnter={show}
+      onMouseLeave={() => setPos(null)}
+      onClick={onClick}
+      className={className ?? 'cursor-help'}
+    >
+      {children}
+      {pos &&
+        createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              top: pos.top,
+              left: pos.left,
+              width,
+              transform: pos.above ? 'translateY(-100%)' : undefined,
+            }}
+            className="z-50 whitespace-normal bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-300 shadow-xl normal-case"
+          >
+            {content}
+          </div>,
+          document.body
+        )}
+    </span>
+  );
+};
+
 const SectionHelp: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -117,12 +171,9 @@ const KpiCard: React.FC<{ label: string; value: string; sublabel: string; toolti
     <div className="flex items-center gap-1.5 mb-2">
       <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">{label}</p>
       {tooltip && (
-        <span className="group relative">
-          <HelpCircle className="w-3.5 h-3.5 text-gray-600 hover:text-gray-400 cursor-help" />
-          <span className="absolute left-0 top-full mt-2 hidden group-hover:block z-10 w-72 whitespace-normal bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs font-normal normal-case text-gray-300 shadow-xl">
-            {tooltip}
-          </span>
-        </span>
+        <Tooltip content={tooltip} width={288}>
+          <HelpCircle className="w-3.5 h-3.5 text-gray-600 hover:text-gray-400" />
+        </Tooltip>
       )}
     </div>
     <p className="text-3xl font-bold text-white mb-1">{value}</p>
@@ -216,17 +267,22 @@ const TrendsSection: React.FC<{ trend: WeeklyTrendPoint[] }> = ({ trend }) => {
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Calls / Week</p>
           <div className="flex items-end gap-1 h-32">
             {trend.map((w) => (
-              <div key={w.weekStart} className="group relative flex-1 flex flex-col items-center justify-end h-full">
-                <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 whitespace-nowrap bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs shadow-xl">
-                  <p className="text-white font-bold">{w.totalCalls.toLocaleString()} calls</p>
-                  <p className="text-gray-400">week of {formatWeek(w.weekStart)}</p>
-                </div>
+              <Tooltip
+                key={w.weekStart}
+                className="group relative flex-1 flex flex-col items-center justify-end h-full"
+                content={
+                  <>
+                    <p className="text-white font-bold">{w.totalCalls.toLocaleString()} calls</p>
+                    <p className="text-gray-400">week of {formatWeek(w.weekStart)}</p>
+                  </>
+                }
+              >
                 <div
                   className="w-full bg-indi-purple-500 rounded-t group-hover:bg-indi-purple-400 transition-colors"
                   style={{ height: `${Math.max((w.totalCalls / maxCalls) * 100, 3)}%` }}
                 />
                 <span className="text-[10px] text-gray-500 mt-1 rotate-0">{formatWeek(w.weekStart)}</span>
-              </div>
+              </Tooltip>
             ))}
           </div>
         </div>
@@ -234,17 +290,22 @@ const TrendsSection: React.FC<{ trend: WeeklyTrendPoint[] }> = ({ trend }) => {
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Error Rate / Week</p>
           <div className="flex items-end gap-1 h-32">
             {trend.map((w) => (
-              <div key={w.weekStart} className="group relative flex-1 flex flex-col items-center justify-end h-full">
-                <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 whitespace-nowrap bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs shadow-xl">
-                  <p className="text-white font-bold">{(w.errorRate * 100).toFixed(1)}% errors</p>
-                  <p className="text-gray-400">week of {formatWeek(w.weekStart)}</p>
-                </div>
+              <Tooltip
+                key={w.weekStart}
+                className="group relative flex-1 flex flex-col items-center justify-end h-full"
+                content={
+                  <>
+                    <p className="text-white font-bold">{(w.errorRate * 100).toFixed(1)}% errors</p>
+                    <p className="text-gray-400">week of {formatWeek(w.weekStart)}</p>
+                  </>
+                }
+              >
                 <div
                   className={`w-full rounded-t transition-colors ${w.errorRate > maxErrorRate * 0.6 ? 'bg-red-500 group-hover:bg-red-400' : 'bg-yellow-500 group-hover:bg-yellow-400'}`}
                   style={{ height: `${Math.max((w.errorRate / maxErrorRate) * 100, 3)}%` }}
                 />
                 <span className="text-[10px] text-gray-500 mt-1">{formatWeek(w.weekStart)}</span>
-              </div>
+              </Tooltip>
             ))}
           </div>
         </div>
@@ -364,10 +425,19 @@ const AIRecommendationsSection: React.FC<{ recommendations: RecommendationItem[]
             </span>
           </div>
           <code className="text-xs font-mono text-gray-500 block mb-2">{r.endpoint}</code>
-          <p className="text-xs text-gray-400 mb-1">{r.problem}</p>
-          <p className="text-xs text-gray-300">{r.fix}</p>
+          <p className="text-xs text-gray-400 mb-2">
+            <span className="text-gray-500">What&apos;s happening: </span>
+            {r.problem}
+          </p>
+          <p className="text-xs text-gray-300 mb-2">
+            <span className="text-gray-500">Fix: </span>
+            {r.fix}
+          </p>
           {r.estimatedMonthlySavingsUsd > 0 && (
-            <p className="text-xs text-indi-purple-300 mt-2">{formatCurrency(r.estimatedMonthlySavingsUsd)}/mo estimated</p>
+            <p className="text-xs text-indi-purple-300">
+              {formatCurrency(r.estimatedMonthlySavingsUsd)}/mo now &middot; up to{' '}
+              {formatCurrency(r.estimatedMonthlySavingsUsd * 12)}/year if fully resolved
+            </p>
           )}
         </div>
       ))}
@@ -376,12 +446,9 @@ const AIRecommendationsSection: React.FC<{ recommendations: RecommendationItem[]
 );
 
 const TermTooltip: React.FC<{ term: string; explanation: string }> = ({ term, explanation }) => (
-  <span className="group relative underline decoration-dotted cursor-help">
-    {term}
-    <span className="absolute left-0 bottom-full mb-1 hidden group-hover:block z-10 w-56 whitespace-normal bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-300 shadow-xl normal-case">
-      {explanation}
-    </span>
-  </span>
+  <Tooltip content={explanation} width={224}>
+    <span className="underline decoration-dotted">{term}</span>
+  </Tooltip>
 );
 
 /** Plain-English bullets for what's actually happening on this endpoint — only the signals that
@@ -615,18 +682,24 @@ const JourneyCard: React.FC<{
       {(journey.conversion.conversionRate * 100).toFixed(0)}% converted &middot; avg {journey.costAndPerf.avgDurationMs.toFixed(0)}ms
       &middot;{' '}
       {journey.costAndPerf.violationCount > 0 ? (
-        <span className="group relative underline decoration-dotted cursor-pointer" onClick={() => onFilterViolations(journey.flow.steps)}>
+        <Tooltip
+          className="underline decoration-dotted cursor-pointer"
+          onClick={() => onFilterViolations(journey.flow.steps)}
+          width={288}
+          content={
+            <>
+              <span className="block text-gray-400 mb-1">Recent examples (click to see all below):</span>
+              {matchingViolations.slice(0, 3).map((v, i) => (
+                <span key={i} className="block mb-1">
+                  <span className="text-gray-500">{formatDate(v.created_at)}:</span> {v.message}
+                </span>
+              ))}
+              {matchingViolations.length > 3 && <span className="text-gray-500">+{matchingViolations.length - 3} more</span>}
+            </>
+          }
+        >
           {journey.costAndPerf.violationCount} violations
-          <span className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-10 w-72 whitespace-normal bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-300 shadow-xl normal-case">
-            <span className="block text-gray-400 mb-1">Recent examples (click to see all below):</span>
-            {matchingViolations.slice(0, 3).map((v, i) => (
-              <span key={i} className="block mb-1">
-                <span className="text-gray-500">{formatDate(v.created_at)}:</span> {v.message}
-              </span>
-            ))}
-            {matchingViolations.length > 3 && <span className="text-gray-500">+{matchingViolations.length - 3} more</span>}
-          </span>
-        </span>
+        </Tooltip>
       ) : (
         '0 violations'
       )}
@@ -634,16 +707,20 @@ const JourneyCard: React.FC<{
         <>
           {' '}
           &middot;{' '}
-          <span className="group relative underline decoration-dotted cursor-help">
-            {formatCurrency(journey.costAndPerf.estimatedMonthlyCost)}/mo
-            <span className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-10 w-64 whitespace-normal bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-300 shadow-xl normal-case">
-              Est. from {journey.costAndPerf.methodology.wastedCalls.toFixed(0)} wasted calls in this flow
-              (redundant repeats and/or calls to a step with a real slowness/error violation — a
-              data-correctness violation like a type mismatch doesn&apos;t count here, since it
-              doesn&apos;t cost extra processing time), as a share of your system&apos;s total
-              observed processing time, applied to your reported monthly infra cost.
-            </span>
-          </span>
+          <Tooltip
+            width={256}
+            content={
+              <>
+                Est. from {journey.costAndPerf.methodology.wastedCalls.toFixed(0)} wasted calls in this flow
+                (redundant repeats and/or calls to a step with a real slowness/error violation — a
+                data-correctness violation like a type mismatch doesn&apos;t count here, since it
+                doesn&apos;t cost extra processing time), as a share of your system&apos;s total
+                observed processing time, applied to your reported monthly infra cost.
+              </>
+            }
+          >
+            <span className="underline decoration-dotted">{formatCurrency(journey.costAndPerf.estimatedMonthlyCost)}/mo</span>
+          </Tooltip>
         </>
       )}
     </p>
@@ -697,7 +774,7 @@ const JourneysSection: React.FC<{
     {journeys.flows.length === 0 ? (
       <p className="text-sm text-gray-500">Not enough session data in the {TIME_RANGE_SUBLABELS[timeRange]} to mine journeys yet.</p>
     ) : (
-      <div className="space-y-4">
+      <div className="space-y-4 max-h-96 overflow-y-auto">
         {journeys.flows.map((journey, i) => (
           <JourneyCard key={i} journey={journey} violations={violations} onFilterViolations={onFilterViolations} />
         ))}
