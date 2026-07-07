@@ -128,6 +128,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     res.status(200).json({ available: true, ...parsed });
   } catch (error) {
+    // A failed live call shouldn't look identical to "no data" when a perfectly good, just
+    // slightly older answer already exists — fall back to it rather than show nothing.
+    if (cached) {
+      res.status(200).json({ available: true, stale: true, ...cached.recommendations });
+      return;
+    }
     if (error instanceof Anthropic.RateLimitError) {
       res.status(429).json({ available: false, error: 'rate_limited' });
       return;

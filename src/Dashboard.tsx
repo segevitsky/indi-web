@@ -66,6 +66,8 @@ interface RecommendationItem {
 
 interface RecommendationsResponse {
   available: boolean;
+  /** True when a fresh Claude call failed and this is the last known-good cached answer instead. */
+  stale?: boolean;
   priorityFix?: { title: string; rationale: string };
   recommendations?: RecommendationItem[];
 }
@@ -245,14 +247,17 @@ const TrendsSection: React.FC<{ trend: WeeklyTrendPoint[] }> = ({ trend }) => {
 const PriorityFixCard: React.FC<{
   endpoint: EndpointInsight | null;
   aiPriorityFix?: { title: string; rationale: string };
-}> = ({ endpoint, aiPriorityFix }) => {
+  stale?: boolean;
+}> = ({ endpoint, aiPriorityFix, stale }) => {
   if (aiPriorityFix) {
     return (
       <div className="bg-gradient-to-br from-indi-purple-950 to-gray-900 border border-indi-purple-800 rounded-2xl p-6 mb-8">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-5 h-5 text-indi-purple-400" />
           <h3 className="text-lg font-bold text-white">#1 Priority Fix</h3>
-          <span className="text-xs text-gray-500 ml-auto">AI-identified</span>
+          <span className="text-xs text-gray-500 ml-auto">
+            AI-identified{stale && ' — showing the last successful analysis, a fresh one failed'}
+          </span>
         </div>
         <p className="text-sm font-semibold text-indi-purple-300 mb-2">{aiPriorityFix.title}</p>
         <p className="text-sm text-gray-300">{aiPriorityFix.rationale}</p>
@@ -978,6 +983,7 @@ const Dashboard = () => {
                 : null
             }
             aiPriorityFix={recommendations?.priorityFix}
+            stale={recommendations?.stale}
           />
         )}
 
