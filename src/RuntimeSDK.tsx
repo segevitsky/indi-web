@@ -134,7 +134,7 @@ const HeroSection: React.FC = () => {
         <div className="text-sm font-medium text-gray-600 mb-4">Stop wasting money on broken APIs</div>
         <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">See exactly what's costing you</h1>
         <p className="text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto">
-          Every day, duplicate requests, slow endpoints, and schema mismatches drain your budget. Indi shows you the exact cost of every inefficiency—and how to fix it in hours, not weeks.
+          Duplicate requests, slow endpoints, and redundant calls hiding in how your users actually move through your product — Indi watches real behavior, not just raw API logs, and shows you the exact cost of every inefficiency, with fixes grounded in how people really use your app.
         </p>
         <div className="flex gap-4 justify-center mb-6">
           <button
@@ -273,7 +273,10 @@ const CalculatorSection: React.FC = () => {
           <div className="bg-teal-50 border-l-4 border-teal-600 rounded-lg p-6 mt-8">
             <p className="font-bold text-gray-900 mb-2">What This Calculation Shows</p>
             <p className="text-sm text-gray-700 mb-2">
-              This is purely infrastructure cost waste — what you're actually paying your cloud provider for API calls that shouldn't exist or are failing. This number is real, measurable, and Indi detects it automatically.
+              This is a simplified planning estimate — a flat cost-per-call applied to your duplicate and retry rates, so you can get a rough number before installing anything. Indi genuinely detects duplicates and retries automatically.
+            </p>
+            <p className="text-sm text-gray-700 mb-2">
+              <strong>Once installed, the real calculation goes further:</strong> it weighs a slow, expensive call's waste more heavily than a fast one's, and expresses your savings as a share of the infrastructure cost you report — not an invented per-call rate.
             </p>
             <p className="text-sm text-gray-700">
               <strong>What this does NOT include:</strong> business impact, lost customers, or productivity costs. Those vary wildly by business and only you can calculate them.
@@ -330,6 +333,10 @@ const DashboardSection: React.FC = () => (
               <p className="font-bold text-gray-900">{DEFAULT_CALCULATOR_STATE.retryRate}% Retry/Error Rate</p>
               <p className="text-sm text-red-600 font-bold">{formatCurrency(DASHBOARD_WASTE.retryCost)}/day in failed + retry costs</p>
             </div>
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
+              <p className="font-bold text-gray-900">Redundant Calls in User Journeys</p>
+              <p className="text-sm text-yellow-700 font-bold">Found in how real users navigate your product — not just raw endpoint stats</p>
+            </div>
             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
               <p className="font-bold text-gray-900">Annual Infrastructure Waste</p>
               <p className="text-sm text-red-600 font-bold">{formatCurrency(DASHBOARD_ANNUAL_WASTE)}/year (fixable)</p>
@@ -357,6 +364,56 @@ const DashboardSection: React.FC = () => (
   </section>
 );
 
+// Journey Showcase Section
+// Illustrates the behavior-based signal (not raw API logs) with a concrete, realistic example —
+// modeled on how a real mined user journey looks, so the "we watch real behavior" claim is
+// concrete rather than abstract.
+const JOURNEY_EXAMPLE_STEPS: { step: string; screen: string; pct: number }[] = [
+  { step: '/api/people/:id', screen: '/org-chart', pct: 100 },
+  { step: '/api/org-chart', screen: '/org-chart', pct: 25 },
+  { step: '/api/people/:id', screen: '/org-chart', pct: 25 },
+  { step: '/api/people/:id', screen: '/org-chart', pct: 25 },
+];
+
+const JourneyShowcaseSection: React.FC = () => (
+  <section className="bg-white py-20 px-6">
+    <div className="max-w-4xl mx-auto">
+      <h2 className="text-4xl font-bold text-center text-gray-900 mb-3">Not Just API Logs — Real User Behavior</h2>
+      <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+        Indi doesn't just watch individual calls — it maps how real users move through your product, session by session, to find waste hiding in the patterns, not just the raw numbers.
+      </p>
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-8 shadow-sm">
+        <code className="text-sm font-mono text-gray-700 block mb-6">
+          /api/people/:id → /api/org-chart → /api/people/:id → /api/people/:id
+        </code>
+        <div className="space-y-3 mb-6">
+          {JOURNEY_EXAMPLE_STEPS.map((s, i) => (
+            <div key={i}>
+              <div className="flex justify-between text-xs text-gray-600 mb-1">
+                <span>
+                  <code className="text-gray-800">{s.step}</code> · screen: {s.screen}
+                </span>
+                <span>{s.pct}%</span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-purple-500 rounded-full" style={{ width: `${Math.max(s.pct, 4)}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-4">
+          <p className="font-bold text-gray-900">/api/people/:id called 3.0x per session — likely redundant</p>
+          <p className="text-sm text-gray-700 mt-1">
+            Happening on the org-chart screen: managers clicking through several direct reports re-fetch the same
+            profile data each time, instead of it being cached for the session — waste that's invisible if you only
+            look at raw API counts.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
 // How It Works Section
 const HowItWorksSection: React.FC = () => (
   <section id="how" className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-20 px-6">
@@ -368,9 +425,9 @@ const HowItWorksSection: React.FC = () => (
       <div className="space-y-12">
         {[
           { title: 'SDK Deploys', desc: 'Install @indi/runtime. Two lines of code. Runs silently in your production app, zero performance impact.', Icon: Terminal },
-          { title: 'Watches Traffic', desc: 'Every API call from real users flows through. The SDK learns patterns, tracks sequences, identifies duplicates and failures.', Icon: Eye },
-          { title: 'Calculates Waste', desc: 'Maps each inefficiency to real infrastructure costs. Duplicates cost $X/day. Retries cost $Y/day. Everything is quantified.', Icon: DollarSign },
-          { title: 'You Fix It', desc: 'Dashboard shows exactly what to fix. Ship code in hours. Watch infrastructure costs drop. Impact compounds over time.', Icon: CheckCircle2 },
+          { title: 'Watches Traffic & Journeys', desc: 'Every API call flows through — but Indi also maps full user sessions, tracking how people actually move through your product, screen by screen, not just isolated requests.', Icon: Eye },
+          { title: 'Calculates Waste', desc: "Weighs each inefficiency by how much it actually costs — a slow call counts for more than a fast one — and expresses savings as a share of the infrastructure spend you report.", Icon: DollarSign },
+          { title: 'AI Recommends the Fix', desc: 'Recommendations are grounded in real behavior patterns, like "managers re-fetch the same profile 3x per session" — not generic advice. Ship the fix in hours.', Icon: CheckCircle2 },
         ].map((step, i) => (
           <div key={i} className={`flex gap-8 ${i % 2 === 1 ? 'flex-row-reverse' : ''}`}>
             <div className="flex-1">
@@ -415,8 +472,9 @@ const WhyItWorksSection: React.FC = () => (
       <p className="text-gray-600 mb-8">Real production data. Real cost math. No guesses.</p>
       <ul className="space-y-3">
         {[
-          'Real user traffic, not synthetic tests or sample data',
-          'Infrastructure costs that are actually measurable',
+          'Real user traffic and real user journeys, not synthetic tests or sample data',
+          'Dollar estimates grounded in your own reported infra spend, not invented numbers',
+          'Recommendations based on how your users actually behave, not generic playbooks',
           'Specific, fixable inefficiencies you can ship today',
           'Privacy first—we never see your actual data',
           'Works with any backend, any API',
@@ -492,6 +550,7 @@ const RuntimeSDK: React.FC = () => (
     <HeroSection />
     <CalculatorSection />
     <DashboardSection />
+    <JourneyShowcaseSection />
     <HowItWorksSection />
     <WhyItWorksSection />
     <GetStartedSection />
