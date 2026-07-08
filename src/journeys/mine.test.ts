@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   buildFunnel,
   computeCostAndPerf,
+  computeDropOffSignals,
   computeRepeatedSteps,
   mergeNamedFlows,
   mergeSessionsById,
   mineFrequentSequences,
 } from './mine';
 import { sessionTracesFixture } from './fixtures/sessionTraces.fixture';
-import type { MinedFlow, SessionTraceRow } from './types';
+import type { MinedFlow, SequenceEvent, SessionTraceRow } from './types';
 import type { Violation } from '../supabase/config';
 
 describe('mergeSessionsById', () => {
@@ -302,5 +303,90 @@ describe('computeRepeatedSteps', () => {
       expect(withTypeMismatch.methodology.wastedLatencyMs).toBeCloseTo(withoutViolation.methodology.wastedLatencyMs, 5);
       expect(withTypeMismatch.estimatedMonthlyCost).toBeCloseTo(withoutViolation.estimatedMonthlyCost, 5);
     });
+  });
+});
+
+describe('computeDropOffSignals', () => {
+  const FLOW: MinedFlow = {
+    steps: ['/api/step-a', '/api/step-b'],
+    name: null,
+    source: 'mined',
+    sessionCount: 0,
+    frequency: 0,
+  };
+
+  function makeSession(id: string, stepADurMs: number, stepAStatus: number, continues: boolean): SessionTraceRow {
+    const events: SequenceEvent[] = [
+      { step: '/api/step-a', method: 'GET', status: stepAStatus, tOffsetMs: 0, durMs: stepADurMs },
+    ];
+    if (continues) events.push({ step: '/api/step-b', method: 'GET', status: 200, tOffsetMs: 1000, durMs: 100 });
+    return {
+      id: `t-${id}`,
+      team_id: 'team-1',
+      session_id: id,
+      started_at: 0,
+      ended_at: 2000,
+      events,
+      flow_tags: [],
+      status_summary: {},
+      created_at: '2026-07-01T00:00:00.000Z',
+    };
+  }
+
+  it('reports a signal when severe sessions continue far less than healthy ones, given enough samples', () => {
+    const rows: SessionTraceRow[] = [
+      ...Array.from({ length: 10 }, (_, i) => makeSession(`healthy-${i}`, 200, 200, i < 9)), // 9/10 continue
+      ...Array.from({ length: 10 }, (_, i) => makeSession(`severe-${i}`, 3000, 200, i < 3)), // 3/10 continue
+    ];
+    const signals = computeDropOffSignals(FLOW, mergeSessionsById(rows));
+
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toEqual({
+      step: '/api/step-a',
+      healthySessionCount: 10,
+      healthyContinuedCount: 9,
+      severeSessionCount: 10,
+      severeContinuedCount: 3,
+      moderate: null,
+    });
+  });
+
+  it('does not report a signal when group sizes are below the minimum, even with a dramatic-looking gap', () => {
+    const rows: SessionTraceRow[] = [
+      ...Array.from({ length: 3 }, (_, i) => makeSession(`healthy-${i}`, 200, 200, true)), // 3/3 continue
+      ...Array.from({ length: 3 }, (_, i) => makeSession(`severe-${i}`, 3000, 200, false)), // 0/3 continue
+    ];
+    const signals = computeDropOffSignals(FLOW, mergeSessionsById(rows));
+    expect(signals).toEqual([]);
+  });
+
+  it('does not report a signal when the continuation gap is too small to be meaningful', () => {
+    const rows: SessionTraceRow[] = [
+      ...Array.from({ length: 10 }, (_, i) => makeSession(`healthy-${i}`, 200, 200, i < 8)), // 80%
+      ...Array.from({ length: 10 }, (_, i) => makeSession(`severe-${i}`, 3000, 200, i < 7)), // 70%, gap 10pts < 15pt
+    ];
+    const signals = computeDropOffSignals(FLOW, mergeSessionsById(rows));
+    expect(signals).toEqual([]);
+  });
+
+  it('returns an empty array for a flow with fewer than 2 steps, without crashing', () => {
+    const singleStepFlow: MinedFlow = { steps: ['/api/step-a'], name: null, source: 'mined', sessionCount: 1, frequency: 1 };
+    const emptyFlow: MinedFlow = { steps: [], name: null, source: 'mined', sessionCount: 0, frequency: 0 };
+    const sessions = mergeSessionsById([makeSession('s1', 200, 200, true)]);
+
+    expect(computeDropOffSignals(singleStepFlow, sessions)).toEqual([]);
+    expect(computeDropOffSignals(emptyFlow, sessions)).toEqual([]);
+  });
+
+  it('includes the moderate tier as corroborating evidence when its rate falls between healthy and severe', () => {
+    const rows: SessionTraceRow[] = [
+      ...Array.from({ length: 10 }, (_, i) => makeSession(`healthy-${i}`, 200, 200, i < 9)), // 90%
+      ...Array.from({ length: 10 }, (_, i) => makeSession(`moderate-${i}`, 1500, 200, i < 6)), // 60%
+      ...Array.from({ length: 10 }, (_, i) => makeSession(`severe-${i}`, 3000, 200, i < 2)), // 20%
+    ];
+    const signals = computeDropOffSignals(FLOW, mergeSessionsById(rows));
+
+    expect(signals).toHaveLength(1);
+    expect(signals[0].moderate).toEqual({ sessionCount: 10, continuedCount: 6 });
   });
 });

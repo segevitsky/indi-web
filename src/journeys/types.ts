@@ -61,12 +61,28 @@ export interface RepeatedStep {
   pages: string[];
 }
 
+/** Evidence that a slow/errored occurrence of `step` correlates with sessions not continuing to
+ * the next step — a checkable pattern, not proof of cause and effect. Raw counts, not
+ * pre-computed rates, so the underlying sample sizes are always visible alongside the claim.
+ * `moderate` is present only when the moderately-slow tier also had enough sessions to check, and
+ * its continuation rate fell between the healthy and severe tiers' — a three-tier gradient is
+ * stronger evidence than a single two-group comparison. */
+export interface DropOffSignal {
+  step: string;
+  healthySessionCount: number;
+  healthyContinuedCount: number;
+  severeSessionCount: number;
+  severeContinuedCount: number;
+  moderate: { sessionCount: number; continuedCount: number } | null;
+}
+
 export interface JourneyFlow {
   flow: MinedFlow;
   funnel: Funnel;
   conversion: FlowConversion;
   costAndPerf: FlowCostAndPerf;
   repeatedSteps: RepeatedStep[];
+  dropOffSignals: DropOffSignal[];
 }
 
 export interface JourneysResult {

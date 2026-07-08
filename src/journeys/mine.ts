@@ -1,5 +1,7 @@
+import { SLOW_P95_THRESHOLD_MS } from '../insights/compute';
 import type { Violation } from '../supabase/config';
 import type {
+  DropOffSignal,
   Funnel,
   FlowConversion,
   FlowCostAndPerf,
@@ -350,6 +352,89 @@ export function computeRepeatedSteps(flow: MinedFlow, sessions: MergedSession[])
     .sort((a, b) => b.avgCallsPerSession - a.avgCallsPerSession);
 }
 
+/** Neither group in a drop-off comparison is trusted with fewer than this many sessions — a
+ * dramatic-looking percentage gap from a handful of sessions isn't a real finding. */
+const MIN_GROUP_SIZE = 5;
+/** The healthy group's continuation rate must exceed the severe group's by at least this many
+ * percentage points before it's worth surfacing — a small gap is more likely noise than signal. */
+const MEANINGFUL_GAP = 0.15;
+
+/** severe: this specific call errored, or took more than 2x the slow threshold — the worst
+ * experience. moderate: slow but under that 2x line, and it succeeded. healthy: everything else. */
+function severityTier(event: SequenceEvent): 'healthy' | 'moderate' | 'severe' {
+  if (event.status >= 400 || event.durMs > SLOW_P95_THRESHOLD_MS * 2) return 'severe';
+  if (event.durMs > SLOW_P95_THRESHOLD_MS) return 'moderate';
+  return 'healthy';
+}
+
+/**
+ * For each step in the flow (except the last), checks whether sessions that experienced a
+ * slow/errored call at that specific step were less likely to continue to the next step than
+ * sessions where it was fine — a correlation between a technical problem and people actually
+ * giving up, not just a cost estimate. This is deliberately conservative: both the healthy and
+ * severe groups must clear MIN_GROUP_SIZE, and the gap must clear MEANINGFUL_GAP, before anything
+ * is reported. When the moderate (mildly slow) tier also has enough sessions and its continuation
+ * rate falls between the other two, that's included too — a three-tier gradient is stronger
+ * evidence than a single two-group comparison.
+ */
+export function computeDropOffSignals(flow: MinedFlow, sessions: MergedSession[]): DropOffSignal[] {
+  if (flow.steps.length < 2) return [];
+  const signals: DropOffSignal[] = [];
+
+  for (let i = 0; i < flow.steps.length - 1; i++) {
+    const step = flow.steps[i];
+    const prefix = flow.steps.slice(0, i + 1);
+    const nextPrefix = flow.steps.slice(0, i + 2);
+    // Sessions that reached this step at all — not sessions matching the *whole* flow, which
+    // would wrongly exclude exactly the sessions that stopped partway (the drop-off cases this
+    // function exists to find). Mirrors buildFunnel's own prefix-based reach counting.
+    const reachedStep = sessions.filter((s) => isOrderedSubsequence(prefix, s.steps));
+
+    const byTier: Record<'healthy' | 'moderate' | 'severe', MergedSession[]> = {
+      healthy: [],
+      moderate: [],
+      severe: [],
+    };
+    for (const s of reachedStep) {
+      const event = s.events.find((e) => e.step === step);
+      if (!event) continue;
+      byTier[severityTier(event)].push(s);
+    }
+
+    const continuedCountOf = (group: MergedSession[]) =>
+      group.filter((s) => isOrderedSubsequence(nextPrefix, s.steps)).length;
+
+    if (byTier.healthy.length < MIN_GROUP_SIZE || byTier.severe.length < MIN_GROUP_SIZE) continue;
+
+    const healthyContinuedCount = continuedCountOf(byTier.healthy);
+    const severeContinuedCount = continuedCountOf(byTier.severe);
+    const healthyRate = healthyContinuedCount / byTier.healthy.length;
+    const severeRate = severeContinuedCount / byTier.severe.length;
+
+    if (healthyRate - severeRate < MEANINGFUL_GAP) continue;
+
+    let moderate: DropOffSignal['moderate'] = null;
+    if (byTier.moderate.length >= MIN_GROUP_SIZE) {
+      const moderateContinuedCount = continuedCountOf(byTier.moderate);
+      const moderateRate = moderateContinuedCount / byTier.moderate.length;
+      if (moderateRate <= healthyRate && moderateRate >= severeRate) {
+        moderate = { sessionCount: byTier.moderate.length, continuedCount: moderateContinuedCount };
+      }
+    }
+
+    signals.push({
+      step,
+      healthySessionCount: byTier.healthy.length,
+      healthyContinuedCount,
+      severeSessionCount: byTier.severe.length,
+      severeContinuedCount,
+      moderate,
+    });
+  }
+
+  return signals;
+}
+
 export function mineJourneys(
   sessionTraces: SessionTraceRow[],
   violations: Violation[],
@@ -375,6 +460,7 @@ export function mineJourneys(
         repeatedSteps
       ),
       repeatedSteps,
+      dropOffSignals: computeDropOffSignals(flow, sessions),
     };
   });
 

@@ -740,6 +740,29 @@ const JourneyCard: React.FC<{
         ))}
       </div>
     )}
+    {journey.dropOffSignals.length > 0 && (
+      <div className="mt-3 space-y-2">
+        {journey.dropOffSignals.map((sig) => {
+          const healthyRate = Math.round((sig.healthyContinuedCount / sig.healthySessionCount) * 100);
+          const severeRate = Math.round((sig.severeContinuedCount / sig.severeSessionCount) * 100);
+          return (
+            <p key={sig.step} className="text-xs text-orange-400">
+              Sessions that hit a slow/failed response at <code>{sig.step}</code> were less likely to continue &mdash;{' '}
+              {sig.healthyContinuedCount}/{sig.healthySessionCount} ({healthyRate}%) continued when it was healthy, vs{' '}
+              {sig.severeContinuedCount}/{sig.severeSessionCount} ({severeRate}%) when it wasn&apos;t
+              {sig.moderate && (
+                <>
+                  , and {sig.moderate.continuedCount}/{sig.moderate.sessionCount} (
+                  {Math.round((sig.moderate.continuedCount / sig.moderate.sessionCount) * 100)}%) when it was only
+                  moderately slow &mdash; a step-by-step decline
+                </>
+              )}
+              . <span className="text-gray-500">An observed pattern, not proven cause and effect.</span>
+            </p>
+          );
+        })}
+      </div>
+    )}
   </div>
   );
 };
