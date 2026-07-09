@@ -343,6 +343,7 @@ describe('computeDropOffSignals', () => {
     expect(signals).toHaveLength(1);
     expect(signals[0]).toEqual({
       step: '/api/step-a',
+      isEndOfFlow: false,
       healthySessionCount: 10,
       healthyContinuedCount: 9,
       severeSessionCount: 10,
@@ -369,13 +370,57 @@ describe('computeDropOffSignals', () => {
     expect(signals).toEqual([]);
   });
 
-  it('returns an empty array for a flow with fewer than 2 steps, without crashing', () => {
+  it('returns an empty array for an empty flow, and for too few sessions to check, without crashing', () => {
     const singleStepFlow: MinedFlow = { steps: ['/api/step-a'], name: null, source: 'mined', sessionCount: 1, frequency: 1 };
     const emptyFlow: MinedFlow = { steps: [], name: null, source: 'mined', sessionCount: 0, frequency: 0 };
     const sessions = mergeSessionsById([makeSession('s1', 200, 200, true)]);
 
+    // Single-step is now a valid shape to check (see the end-of-flow test below) — this returns
+    // empty here only because there's just 1 session, well under MIN_GROUP_SIZE, not because the
+    // function refuses to look at a 1-step flow.
     expect(computeDropOffSignals(singleStepFlow, sessions)).toEqual([]);
     expect(computeDropOffSignals(emptyFlow, sessions)).toEqual([]);
+  });
+
+  function makeEndOfFlowSession(id: string, stepBDurMs: number, stepBStatus: number, continuesAfter: boolean): SessionTraceRow {
+    const events: SequenceEvent[] = [
+      { step: '/api/step-a', method: 'GET', status: 200, tOffsetMs: 0, durMs: 100 },
+      { step: '/api/step-b', method: 'GET', status: stepBStatus, tOffsetMs: 1000, durMs: stepBDurMs },
+    ];
+    if (continuesAfter) events.push({ step: '/api/step-c', method: 'GET', status: 200, tOffsetMs: 2000, durMs: 50 });
+    return {
+      id: `t-${id}`,
+      team_id: 'team-1',
+      session_id: id,
+      started_at: 0,
+      ended_at: 3000,
+      events,
+      flow_tags: [],
+      status_summary: {},
+      created_at: '2026-07-01T00:00:00.000Z',
+    };
+  }
+
+  it('reports a signal at the end of the flow when severe sessions end there far more than healthy ones do', () => {
+    // Every session reaches both step-a and step-b here — the drop-off this test checks for is
+    // whether the session does *anything else at all* after step-b, since step-b is the flow's
+    // last step and there's no "next mined step" to check reaching instead.
+    const rows: SessionTraceRow[] = [
+      ...Array.from({ length: 10 }, (_, i) => makeEndOfFlowSession(`healthy-${i}`, 200, 200, i < 9)), // 9/10 do something after
+      ...Array.from({ length: 10 }, (_, i) => makeEndOfFlowSession(`severe-${i}`, 3000, 200, i < 2)), // 2/10 do something after
+    ];
+    const signals = computeDropOffSignals(FLOW, mergeSessionsById(rows));
+
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toEqual({
+      step: '/api/step-b',
+      isEndOfFlow: true,
+      healthySessionCount: 10,
+      healthyContinuedCount: 9,
+      severeSessionCount: 10,
+      severeContinuedCount: 2,
+      moderate: null,
+    });
   });
 
   it('includes the moderate tier as corroborating evidence when its rate falls between healthy and severe', () => {

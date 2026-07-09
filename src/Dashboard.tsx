@@ -745,11 +745,17 @@ const JourneyCard: React.FC<{
         {journey.dropOffSignals.map((sig) => {
           const healthyRate = Math.round((sig.healthyContinuedCount / sig.healthySessionCount) * 100);
           const severeRate = Math.round((sig.severeContinuedCount / sig.severeSessionCount) * 100);
+          const lead = sig.isEndOfFlow
+            ? `Sessions were more likely to end there entirely after a slow/failed response at `
+            : `Sessions were less likely to continue after a slow/failed response at `;
           return (
             <p key={sig.step} className="text-xs text-orange-400">
-              Sessions that hit a slow/failed response at <code>{sig.step}</code> were less likely to continue &mdash;{' '}
-              {sig.healthyContinuedCount}/{sig.healthySessionCount} ({healthyRate}%) continued when it was healthy, vs{' '}
-              {sig.severeContinuedCount}/{sig.severeSessionCount} ({severeRate}%) when it wasn&apos;t
+              {lead}
+              <code>{sig.step}</code>
+              {sig.isEndOfFlow && ' (the last step of this flow)'} &mdash;{' '}
+              {sig.healthyContinuedCount}/{sig.healthySessionCount} ({healthyRate}%) went on to do something else when
+              it was healthy, vs {sig.severeContinuedCount}/{sig.severeSessionCount} ({severeRate}%) when it
+              wasn&apos;t
               {sig.moderate && (
                 <>
                   , and {sig.moderate.continuedCount}/{sig.moderate.sessionCount} (

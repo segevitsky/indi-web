@@ -368,29 +368,36 @@ function severityTier(event: SequenceEvent): 'healthy' | 'moderate' | 'severe' {
 }
 
 /**
- * For each step in the flow (except the last), checks whether sessions that experienced a
- * slow/errored call at that specific step were less likely to continue to the next step than
- * sessions where it was fine — a correlation between a technical problem and people actually
- * giving up, not just a cost estimate. This is deliberately conservative: both the healthy and
- * severe groups must clear MIN_GROUP_SIZE, and the gap must clear MEANINGFUL_GAP, before anything
- * is reported. When the moderate (mildly slow) tier also has enough sessions and its continuation
- * rate falls between the other two, that's included too — a three-tier gradient is stronger
- * evidence than a single two-group comparison.
+ * For each step in the flow, checks whether sessions that experienced a slow/errored call at that
+ * specific step were less likely to continue than sessions where it was fine — a correlation
+ * between a technical problem and people actually giving up, not just a cost estimate. This is
+ * deliberately conservative: both the healthy and severe groups must clear MIN_GROUP_SIZE, and
+ * the gap must clear MEANINGFUL_GAP, before anything is reported. When the moderate (mildly slow)
+ * tier also has enough sessions and its continuation rate falls between the other two, that's
+ * included too — a three-tier gradient is stronger evidence than a single two-group comparison.
+ *
+ * "Continued" means two different things depending on the step: for any step before the last,
+ * it's reaching the specific next step in this mined flow (same as before). For the *last* step,
+ * there is no next mined step to check — so it means the session did anything at all afterward.
+ * Without that distinction, a flow that ends at a slow endpoint (a very common, real shape — see
+ * e.g. a flow ending at a chronically slow balance-lookup call) would be structurally invisible
+ * to this check, since the drop-off there happens before a next mined step could ever be reached.
  */
 export function computeDropOffSignals(flow: MinedFlow, sessions: MergedSession[]): DropOffSignal[] {
-  if (flow.steps.length < 2) return [];
+  if (flow.steps.length === 0) return [];
   const signals: DropOffSignal[] = [];
 
-  for (let i = 0; i < flow.steps.length - 1; i++) {
+  for (let i = 0; i < flow.steps.length; i++) {
     const step = flow.steps[i];
+    const isEndOfFlow = i === flow.steps.length - 1;
     const prefix = flow.steps.slice(0, i + 1);
-    const nextPrefix = flow.steps.slice(0, i + 2);
+    const nextPrefix = isEndOfFlow ? null : flow.steps.slice(0, i + 2);
     // Sessions that reached this step at all — not sessions matching the *whole* flow, which
     // would wrongly exclude exactly the sessions that stopped partway (the drop-off cases this
     // function exists to find). Mirrors buildFunnel's own prefix-based reach counting.
     const reachedStep = sessions.filter((s) => isOrderedSubsequence(prefix, s.steps));
 
-    const byTier: Record<'healthy' | 'moderate' | 'severe', MergedSession[]> = {
+    const byTier: Record<'healthy' | 'moderate' | 'severe', { session: MergedSession; event: SequenceEvent }[]> = {
       healthy: [],
       moderate: [],
       severe: [],
@@ -398,11 +405,15 @@ export function computeDropOffSignals(flow: MinedFlow, sessions: MergedSession[]
     for (const s of reachedStep) {
       const event = s.events.find((e) => e.step === step);
       if (!event) continue;
-      byTier[severityTier(event)].push(s);
+      byTier[severityTier(event)].push({ session: s, event });
     }
 
-    const continuedCountOf = (group: MergedSession[]) =>
-      group.filter((s) => isOrderedSubsequence(nextPrefix, s.steps)).length;
+    const continuedCountOf = (group: { session: MergedSession; event: SequenceEvent }[]) =>
+      group.filter(({ session, event }) =>
+        isEndOfFlow
+          ? session.events.indexOf(event) < session.events.length - 1
+          : isOrderedSubsequence(nextPrefix!, session.steps)
+      ).length;
 
     if (byTier.healthy.length < MIN_GROUP_SIZE || byTier.severe.length < MIN_GROUP_SIZE) continue;
 
@@ -424,6 +435,7 @@ export function computeDropOffSignals(flow: MinedFlow, sessions: MergedSession[]
 
     signals.push({
       step,
+      isEndOfFlow,
       healthySessionCount: byTier.healthy.length,
       healthyContinuedCount,
       severeSessionCount: byTier.severe.length,
