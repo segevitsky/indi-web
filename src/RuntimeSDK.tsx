@@ -1,37 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Terminal, Eye, DollarSign, CheckCircle2 } from 'lucide-react';
 import Blobi from './Blobi';
 
-// Types
-// Deliberately two inputs, not four: almost every company knows its monthly infra bill, but
-// almost none know their daily API call count or per-call cloud cost off the top of their head —
-// and nobody who hasn't installed Indi yet can know their own duplicate/retry rate, since that's
-// the thing Indi measures for them. wastePercent is explicitly the visitor's own hypothetical,
-// not a claimed industry average — we don't have the real customer data yet to back one up.
-interface CalculatorState {
-  monthlyInfraSpend: number;
-  wastePercent: number;
-}
-
-interface WasteNumbers {
-  monthlySavings: number;
-  annualSavings: number;
-}
-
-interface CalculatorResult {
-  monthlySavings: string;
-  annualSavings: string;
-}
-
-// Default example used by the calculator and by the static preview sections below it,
-// so both stay mathematically consistent with each other. $10,000/mo also matches the demo
-// team's real Settings value in the actual dashboard.
-const DEFAULT_CALCULATOR_STATE: CalculatorState = {
+// A single, static, illustrative example — not a calculator, not user input. Modeled on what a
+// real customer's numbers look like (matches the demo team's actual $10K/mo infra cost), used
+// consistently across the Dashboard Preview and How It Works stats so nothing drifts. We stopped
+// asking visitors to type in their own guess: nobody who hasn't installed Indi can know their real
+// waste %, so a calculator that pretends otherwise contradicts the "we measure, not guess"
+// positioning everywhere else on this page and in the real product.
+const ILLUSTRATIVE_EXAMPLE = {
   monthlyInfraSpend: 10000,
-  wastePercent: 15,
+  measuredWastePercent: 14,
+  monthlySavings: 1400,
+  annualSavings: 16800,
 };
 
 // Utility function to format currency
@@ -42,34 +26,6 @@ const formatCurrency = (num: number): string => {
   return '$' + num.toFixed(0);
 };
 
-// Same formula the real, installed dashboard uses (wasteRatio x infraCostPerMonth) — just with a
-// hypothetical percentage here instead of a measured one.
-const computeWaste = (state: CalculatorState): WasteNumbers => {
-  const monthlySavings = state.monthlyInfraSpend * (state.wastePercent / 100);
-  return { monthlySavings, annualSavings: monthlySavings * 12 };
-};
-
-const formatWaste = (waste: WasteNumbers): CalculatorResult => ({
-  monthlySavings: formatCurrency(waste.monthlySavings),
-  annualSavings: formatCurrency(waste.annualSavings),
-});
-
-// SVG Icons
-const StarIcon = () => (
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
-    <path d="M 50 20 L 60 40 L 80 40 L 65 55 L 72 75 L 50 60 L 28 75 L 35 55 L 20 40 L 40 40 Z" fill="white" />
-  </svg>
-);
-
-const DollarIcon = () => (
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
-    <text x="50" y="60" fontSize="40" fill="white" textAnchor="middle" fontWeight="bold">
-      $
-    </text>
-    <circle cx="50" cy="50" r="28" fill="none" stroke="white" strokeWidth="2" />
-  </svg>
-);
-
 // Navigation Component
 const Navigation: React.FC = () => (
   <nav className="flex justify-between items-center px-12 py-6 bg-white border-b border-gray-200">
@@ -78,8 +34,8 @@ const Navigation: React.FC = () => (
       <span className="text-xl font-bold text-purple-600">INDI</span>
     </div>
     <div className="flex gap-10 text-sm">
-      <a href="#calculator" className="text-gray-600 hover:text-purple-600 transition">
-        Calculator
+      <a href="#demo" className="text-gray-600 hover:text-purple-600 transition">
+        See it in action
       </a>
       <a href="#how" className="text-gray-600 hover:text-purple-600 transition">
         How it works
@@ -129,140 +85,70 @@ const HeroSection: React.FC = () => {
   );
 };
 
-// Calculator Section
-const CalculatorSection: React.FC = () => {
-  const [state, setState] = useState<CalculatorState>(DEFAULT_CALCULATOR_STATE);
-
-  const results = formatWaste(computeWaste(state));
-
-  const handleInputChange = (field: keyof CalculatorState, value: number) => {
-    setState((prev) => ({ ...prev, [field]: value }));
-  };
-
-  return (
-    <section id="calculator" className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-12 px-6">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-center text-gray-900 mb-2">Measure Your API Waste</h2>
-        <p className="text-center text-gray-600 mb-8">See what you're actually paying for. No guesses about business impact.</p>
-
-        <div className="bg-white rounded-2xl p-12 shadow-lg">
-          {/* Input Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-8">
-            {/* Daily API Calls */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center">
-                  <DollarIcon />
-                </div>
-                <label className="text-xs font-bold text-gray-900 uppercase tracking-wide">Monthly Infrastructure Spend</label>
-              </div>
-              <input
-                type="number"
-                value={state.monthlyInfraSpend}
-                onChange={(e) => handleInputChange('monthlyInfraSpend', parseFloat(e.target.value))}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-semibold text-gray-900 focus:outline-none focus:border-purple-600 focus:bg-white transition"
-              />
-              <p className="text-xs text-gray-600 mt-2">What you pay your cloud provider per month — check your AWS/GCP/hosting bill</p>
-            </div>
-
-            {/* Estimated Waste % */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
-                  <StarIcon />
-                </div>
-                <label className="text-xs font-bold text-gray-900 uppercase tracking-wide">Estimated Waste %</label>
-              </div>
-              <input
-                type="number"
-                value={state.wastePercent}
-                onChange={(e) => handleInputChange('wastePercent', parseFloat(e.target.value))}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-semibold text-gray-900 focus:outline-none focus:border-purple-600 focus:bg-white transition"
-              />
-              <p className="text-xs text-gray-600 mt-2">
-                Your own estimate — what % of that spend might be going to duplicate calls, slow endpoints, or errors?
-                Indi measures your real number once installed; nobody can know it before then.
-              </p>
-            </div>
+// Pain Section
+// Stated plainly, before any proof or math — specific, recognizable frustrations, not generic
+// "APIs are hard" copy, so the page earns attention before asking for trust.
+const PainSection: React.FC = () => (
+  <section className="bg-white py-12 px-6 border-b border-gray-100">
+    <div className="max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {[
+          "You know something's slow, but not whether it's actually losing you customers.",
+          'Your infra bill keeps climbing and nobody can point to exactly why.',
+          'Something breaks quietly for days before a customer complains and you find out.',
+        ].map((text, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <span className="text-red-500 font-bold text-xl flex-shrink-0">×</span>
+            <p className="text-gray-700 text-base">{text}</p>
           </div>
-
-          {/* Divider */}
-          <div className="h-px bg-gray-200 my-8"></div>
-
-          {/* Results */}
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-6">Hypothetical Savings</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-l-4 border-purple-600">
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Monthly Savings</p>
-              <p className="text-3xl font-bold text-gray-900 mb-1">{results.monthlySavings}</p>
-              <p className="text-sm text-gray-600">if that % of your spend is genuinely wasted</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-l-4 border-teal-500">
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Annual Savings</p>
-              <p className="text-3xl font-bold text-gray-900 mb-1">{results.annualSavings}</p>
-              <p className="text-sm text-gray-600">same math, one year out</p>
-            </div>
-          </div>
-
-          {/* Disclaimer */}
-          <div className="bg-teal-50 border-l-4 border-teal-600 rounded-lg p-6 mt-8">
-            <p className="font-bold text-gray-900 mb-2">What This Calculation Shows</p>
-            <p className="text-sm text-gray-700 mb-2">
-              This is your own hypothetical — you pick a waste %, we apply it to your real monthly spend. It's the
-              exact same formula the real, installed dashboard uses: your measured waste ratio × your reported
-              infrastructure cost. The only difference is that number is a guess here, and a genuine measurement
-              once Indi is actually watching your traffic.
-            </p>
-            <p className="text-sm text-gray-700">
-              <strong>What this does NOT include:</strong> business impact, lost customers, or productivity costs. Those vary wildly by business and only you can calculate them.
-            </p>
-          </div>
-        </div>
+        ))}
       </div>
-    </section>
-  );
-};
+    </div>
+  </section>
+);
 
 // Dashboard Preview Section
-// Mirrors the calculator's default example so the numbers never drift apart.
-const DASHBOARD_WASTE = computeWaste(DEFAULT_CALCULATOR_STATE);
-
+// A single static, illustrative example (ILLUSTRATIVE_EXAMPLE) — modeled on real-shaped numbers,
+// never a visitor's own guess. Every figure here is labeled as measured, not asked-for.
 const DashboardSection: React.FC = () => (
   <section id="demo" className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-12 px-6">
     <div className="max-width mx-auto max-w-6xl">
+      <p className="text-center text-sm text-gray-500 mb-6">
+        A real-shaped example of what Indi finds — not your numbers, and not something you type in.
+      </p>
       {/* Dashboard Card */}
       <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg mb-8">
         <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
           <h3 className="text-lg font-bold text-gray-900">Your Cost Overview</h3>
-          <p className="text-sm text-gray-600">{formatCurrency(DEFAULT_CALCULATOR_STATE.monthlyInfraSpend)}/mo infra spend</p>
+          <p className="text-sm text-gray-600">{formatCurrency(ILLUSTRATIVE_EXAMPLE.monthlyInfraSpend)}/mo infra spend</p>
         </div>
 
         {/* Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 border-l-4 border-purple-600">
             <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Monthly Infra Spend</p>
-            <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(DEFAULT_CALCULATOR_STATE.monthlyInfraSpend)}</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(ILLUSTRATIVE_EXAMPLE.monthlyInfraSpend)}</p>
+            <p className="text-xs text-gray-600">what they told us they pay</p>
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 border-l-4 border-red-500">
-            <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Estimated Waste</p>
-            <p className="text-2xl font-bold text-gray-900 mb-1">{DEFAULT_CALCULATOR_STATE.wastePercent}%</p>
-            <p className="text-xs text-gray-600">of that spend</p>
+            <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Measured Waste</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{ILLUSTRATIVE_EXAMPLE.measuredWastePercent}%</p>
+            <p className="text-xs text-gray-600">of real, observed processing time</p>
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 border-l-4 border-teal-600">
             <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Monthly Savings</p>
-            <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(DASHBOARD_WASTE.monthlySavings)}</p>
-            <p className="text-xs text-gray-600">if that estimate holds</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(ILLUSTRATIVE_EXAMPLE.monthlySavings)}</p>
+            <p className="text-xs text-gray-600">that % of their reported spend</p>
           </div>
         </div>
 
         {/* Problems */}
         <div className="border-t border-gray-200 pt-6">
-          <p className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-4">What's Draining Your Budget</p>
+          <p className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-4">What's Draining Their Budget</p>
           <div className="space-y-3">
             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-              <p className="font-bold text-gray-900">{DEFAULT_CALCULATOR_STATE.wastePercent}% Estimated Waste</p>
-              <p className="text-sm text-red-600 font-bold">{formatCurrency(DASHBOARD_WASTE.monthlySavings)}/mo — duplicate calls, slow endpoints, and errors</p>
+              <p className="font-bold text-gray-900">{ILLUSTRATIVE_EXAMPLE.measuredWastePercent}% Measured Waste</p>
+              <p className="text-sm text-red-600 font-bold">{formatCurrency(ILLUSTRATIVE_EXAMPLE.monthlySavings)}/mo — duplicate calls, slow endpoints, and errors</p>
             </div>
             <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
               <p className="font-bold text-gray-900">Redundant Calls in User Journeys</p>
@@ -270,7 +156,7 @@ const DashboardSection: React.FC = () => (
             </div>
             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
               <p className="font-bold text-gray-900">Annual Infrastructure Waste</p>
-              <p className="text-sm text-red-600 font-bold">{formatCurrency(DASHBOARD_WASTE.annualSavings)}/year (fixable)</p>
+              <p className="text-sm text-red-600 font-bold">{formatCurrency(ILLUSTRATIVE_EXAMPLE.annualSavings)}/year (fixable)</p>
             </div>
           </div>
         </div>
@@ -362,6 +248,59 @@ const JourneyShowcaseSection: React.FC = () => (
   </section>
 );
 
+// Unusual Activity Showcase Section
+// Gives the learning-system pillar the same visual proof treatment Journey Showcase gives
+// behavior — a concrete example instead of a bare claim, so "learns what's normal for you" isn't
+// just a line in a bullet list with nothing to point to.
+const UNUSUAL_ACTIVITY_EXAMPLE: { day: string; calls: number; isToday?: boolean }[] = [
+  { day: 'Mon', calls: 520 },
+  { day: 'Tue', calls: 480 },
+  { day: 'Wed', calls: 510 },
+  { day: 'Thu', calls: 495 },
+  { day: 'Fri', calls: 530 },
+  { day: 'Sat', calls: 190 },
+  { day: 'Sun', calls: 175 },
+  { day: 'Today', calls: 1420, isToday: true },
+];
+
+const UnusualActivityShowcaseSection: React.FC = () => {
+  const maxCalls = Math.max(...UNUSUAL_ACTIVITY_EXAMPLE.map((d) => d.calls));
+
+  return (
+    <section className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-20 px-6">
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-4xl font-bold text-center text-gray-900 mb-3">Knows What's Normal For You</h2>
+        <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+          Indi remembers every day, forever — so it knows what a normal day looks like for every part of your app,
+          and notices the moment something isn't. Compared only to that endpoint's own history, never to anything
+          else.
+        </p>
+        <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
+          <code className="text-sm font-mono text-gray-700 block mb-6">GET /api/checkout</code>
+          <div className="flex items-end gap-2 h-40 mb-6">
+            {UNUSUAL_ACTIVITY_EXAMPLE.map((d, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                <div
+                  className={`w-full rounded-t ${d.isToday ? 'bg-red-500' : 'bg-purple-300'}`}
+                  style={{ height: `${Math.max((d.calls / maxCalls) * 100, 3)}%` }}
+                />
+                <span className={`text-[10px] mt-1 ${d.isToday ? 'text-red-600 font-bold' : 'text-gray-500'}`}>{d.day}</span>
+              </div>
+            ))}
+          </div>
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
+            <p className="font-bold text-gray-900">Traffic much higher than usual</p>
+            <p className="text-sm text-gray-700 mt-1">
+              This endpoint typically sees about 500 calls a day. Today: 1,420 — nearly 3x normal. Flagged
+              automatically, the moment it happens, using data Indi already has — nothing new to set up.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 // How It Works Section
 const HowItWorksSection: React.FC = () => (
   <section id="how" className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-20 px-6">
@@ -396,8 +335,8 @@ const HowItWorksSection: React.FC = () => (
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
         {[
-          { value: formatCurrency(DASHBOARD_WASTE.annualSavings), label: 'Annual savings', desc: 'In this hypothetical example' },
-          { value: `${DEFAULT_CALCULATOR_STATE.wastePercent}%`, label: 'Estimated waste', desc: 'A starting point — Indi measures your real number' },
+          { value: formatCurrency(ILLUSTRATIVE_EXAMPLE.annualSavings), label: 'Annual savings', desc: 'In the example above' },
+          { value: `${ILLUSTRATIVE_EXAMPLE.measuredWastePercent}%`, label: 'Measured waste', desc: 'Not guessed — observed in real traffic' },
           { value: '2hrs', label: 'To first fix', desc: 'See it. Fix it. Deploy.' },
         ].map((stat, i) => (
           <div key={i} className="bg-white rounded-2xl border border-gray-200 p-6 text-center">
@@ -496,9 +435,10 @@ const RuntimeSDK: React.FC = () => (
   <div className="w-full">
     <Navigation />
     <HeroSection />
-    <CalculatorSection />
+    <PainSection />
     <DashboardSection />
     <JourneyShowcaseSection />
+    <UnusualActivityShowcaseSection />
     <HowItWorksSection />
     <WhyItWorksSection />
     <GetStartedSection />
