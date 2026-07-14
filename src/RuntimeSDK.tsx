@@ -129,7 +129,7 @@ const HeroSection: React.FC = () => {
     <section className="bg-white py-16 px-12">
       <div className="max-w-4xl mx-auto text-center">
         <div className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-4">
-          API Intelligence System
+          Your App&apos;s Personal Analyst
         </div>
         <div className="text-sm font-medium text-gray-600 mb-4">Stop wasting money on broken APIs</div>
         <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">See exactly what's costing you</h1>

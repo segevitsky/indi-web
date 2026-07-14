@@ -80,7 +80,7 @@ const RegisterForm = () => {
 
         <div className="bg-white rounded-2xl shadow-lg p-8">
           <div className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-2 text-center">
-            API Intelligence System
+            Your App&apos;s Personal Analyst
           </div>
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">Join the Beta</h2>
 
