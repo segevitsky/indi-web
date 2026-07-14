@@ -410,6 +410,23 @@ const JourneyShowcaseSection: React.FC = () => (
           </p>
         </div>
       </div>
+
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-8 shadow-sm mt-6">
+        <code className="text-sm font-mono text-gray-700 block mb-4">
+          /api/people/:id → /api/time-off/balance/:id
+        </code>
+        <p className="text-sm text-gray-600 mb-4">
+          This second call is chronically slow. Here&apos;s what happens to real visits when it is:
+        </p>
+        <div className="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-4">
+          <p className="font-bold text-gray-900">Slow responses correlate with people actually leaving</p>
+          <p className="text-sm text-gray-700 mt-1">
+            9 out of 10 visits continued when this call responded fast. Only 3 out of 10 continued when it was slow.
+            Not proof it&apos;s the cause — but a real, checkable pattern grounded in your own traffic, not a
+            generic industry benchmark.
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 );
@@ -475,6 +492,7 @@ const WhyItWorksSection: React.FC = () => (
           'Real user traffic and real user journeys, not synthetic tests or sample data',
           'Dollar estimates grounded in your own reported infra spend, not invented numbers',
           'Recommendations based on how your users actually behave, not generic playbooks',
+          "Learns what's normal for every part of your app, and flags the moment something changes",
           'Specific, fixable inefficiencies you can ship today',
           'Privacy first—we never see your actual data',
           'Works with any backend, any API',
