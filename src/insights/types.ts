@@ -128,3 +128,21 @@ export interface WeeklyTrendPoint {
   totalCalls: number;
   errorRate: number;
 }
+
+export type AnomalyMetric = 'traffic' | 'errors' | 'speed';
+export type AnomalyDirection = 'high' | 'low';
+
+/** An endpoint's most recent day looking meaningfully different from its own history — not a
+ * comparison to other endpoints, and not a statistical significance test, just "is today far
+ * outside what's normal for this specific endpoint." Raw numbers, not just a verdict, so the
+ * underlying data is always checkable. */
+export interface TrafficAnomaly {
+  endpoint: string;
+  method: string;
+  metric: AnomalyMetric;
+  direction: AnomalyDirection;
+  day: string;
+  todayValue: number;
+  baselineAverage: number;
+  baselineDays: number;
+}

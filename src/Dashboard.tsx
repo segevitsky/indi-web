@@ -19,6 +19,7 @@ import {
   Sparkles,
   HelpCircle,
   TrendingUp,
+  Radar,
   X,
 } from 'lucide-react';
 import { supabase, type Team, type Indicator, type Violation } from './supabase/config';
@@ -26,8 +27,16 @@ import { signOut, getUser, getTeamForUser, createTeamForUser } from './supabase/
 import { getInfraCostPerMonth } from './supabase/teamSettings';
 import { computeInsights, SLOW_P95_THRESHOLD_MS } from './insights/compute';
 import { computeWeeklyTrend } from './insights/trends';
+import { detectTrafficAnomalies } from './insights/anomalies';
 import { fetchDailyRollups, fetchEndpointStats, fetchSessionTraces, fetchViolations } from './insights/fetchLive';
-import type { EndpointDailyRollupRow, EndpointInsight, EndpointStatsRow, Insights, WeeklyTrendPoint } from './insights/types';
+import type {
+  EndpointDailyRollupRow,
+  EndpointInsight,
+  EndpointStatsRow,
+  Insights,
+  TrafficAnomaly,
+  WeeklyTrendPoint,
+} from './insights/types';
 import { mineJourneys } from './journeys/mine';
 import type { Funnel, JourneyFlow, JourneysResult, SessionTraceRow, SeverityTier } from './journeys/types';
 import type { User } from '@supabase/supabase-js';
@@ -319,6 +328,68 @@ const TrendsSection: React.FC<{ trend: WeeklyTrendPoint[] }> = ({ trend }) => {
     </div>
   );
 };
+
+const ANOMALY_METRIC_LABEL: Record<TrafficAnomaly['metric'], string> = {
+  traffic: 'Traffic',
+  errors: 'Errors',
+  speed: 'Speed',
+};
+
+function formatAnomalyValue(metric: TrafficAnomaly['metric'], value: number): string {
+  if (metric === 'errors') return `${(value * 100).toFixed(1)}%`;
+  if (metric === 'speed') return `${Math.round(value)}ms`;
+  return Math.round(value).toLocaleString();
+}
+
+const UnusualActivitySection: React.FC<{ anomalies: TrafficAnomaly[] }> = ({ anomalies }) => (
+  <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-8">
+    <div className="flex items-center gap-2 mb-6">
+      <Radar className="w-5 h-5 text-teal-400" />
+      <h3 className="text-lg font-bold text-white">Unusual Activity</h3>
+      <SectionHelp>
+        <p>
+          For each endpoint, today is compared to its <strong className="text-gray-100">own</strong> typical day —
+          not to other endpoints, and not a guess. It only checks endpoints with at least 7 days of history and a
+          normal, meaningful amount of traffic, so a brand-new or barely-used endpoint doesn&apos;t show up as a
+          false alarm.
+        </p>
+        <p>
+          Flagged when today is at least <strong className="text-gray-100">2x</strong> higher, or half as much,
+          as that endpoint&apos;s own recent average — for traffic (how many calls), errors (what share failed), or
+          speed (how long calls took).
+        </p>
+      </SectionHelp>
+    </div>
+    {anomalies.length === 0 ? (
+      <p className="text-sm text-gray-500">Nothing unusual today — every endpoint is within its normal range.</p>
+    ) : (
+      <div className="space-y-3 max-h-96 overflow-y-auto">
+        {anomalies.map((a, i) => (
+          <div key={i} className="bg-gray-950 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-1">
+              <code className="text-sm font-mono text-gray-200">
+                {a.method} {a.endpoint}
+              </code>
+              <span
+                className={`text-xs px-2 py-0.5 rounded font-medium ${a.direction === 'high' ? 'bg-red-900 text-red-300' : 'bg-yellow-900 text-yellow-300'}`}
+              >
+                {ANOMALY_METRIC_LABEL[a.metric]} {a.direction === 'high' ? 'much higher' : 'much lower'} than usual
+              </span>
+            </div>
+            <p className="text-xs text-gray-400">
+              Today: <span className="text-gray-200 font-semibold">{formatAnomalyValue(a.metric, a.todayValue)}</span>
+              {' · '}
+              Typical for this endpoint:{' '}
+              <span className="text-gray-200 font-semibold">{formatAnomalyValue(a.metric, a.baselineAverage)}</span>
+              {' · '}
+              based on the last {a.baselineDays} days
+            </p>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
 
 const PriorityFixCard: React.FC<{
   endpoint: EndpointInsight | null;
@@ -861,6 +932,11 @@ const Dashboard = () => {
     return computeInsights(windowed, scopedViolations, infraCostPerMonth);
   }, [timeRange, rawEndpointStats, rawDailyRollups, scopedViolations, infraCostPerMonth]);
 
+  // Unusual Activity always compares today against an endpoint's own trailing history — that's
+  // the whole point, so unlike insights/journeys this deliberately ignores the timeframe picker
+  // and always uses the full rollup history already fetched for Trends.
+  const anomalies = useMemo<TrafficAnomaly[]>(() => detectTrafficAnomalies(rawDailyRollups), [rawDailyRollups]);
+
   // Journeys mines the actual session sequences (no rollup shortcut is possible — see plan), so
   // extending it just means filtering the already-fetched 90-day session pool to the picker's
   // window and re-mining, instead of a fixed 24h fetch.
@@ -1140,6 +1216,7 @@ const Dashboard = () => {
         </div>
 
         {trend && <TrendsSection trend={trend} />}
+        <UnusualActivitySection anomalies={anomalies} />
         <TimeRangePicker value={timeRange} onChange={setTimeRange} />
         {insights && <KpiRow insights={insights} timeRange={timeRange} />}
         {insights && (
