@@ -12,6 +12,7 @@ import type {
   RepeatedStep,
   SequenceEvent,
   SessionTraceRow,
+  SeverityTier,
 } from './types';
 
 /** Only violation types that genuinely represent wasted processing time count toward the dollar
@@ -355,13 +356,25 @@ export function computeRepeatedSteps(flow: MinedFlow, sessions: MergedSession[])
 /** Neither group in a drop-off comparison is trusted with fewer than this many sessions — a
  * dramatic-looking percentage gap from a handful of sessions isn't a real finding. */
 const MIN_GROUP_SIZE = 5;
-/** The healthy group's continuation rate must exceed the severe group's by at least this many
- * percentage points before it's worth surfacing — a small gap is more likely noise than signal. */
+/** The lower-severity group's continuation rate must exceed the higher-severity group's by at
+ * least this many percentage points before it's worth surfacing — a small gap is more likely
+ * noise than signal. */
 const MEANINGFUL_GAP = 0.15;
+/** Ascending severity order, used both to classify events and to check a three-tier gradient. */
+const TIER_ORDER: SeverityTier[] = ['healthy', 'moderate', 'severe'];
+/** Tier pairs to compare, tried in order from the widest possible contrast to the narrowest.
+ * Not every endpoint has a genuinely extreme "severe" tail — some are just consistently
+ * moderately slow and never cross that line — so falling back to a narrower pair when the wider
+ * one lacks enough data catches real signal that assuming one fixed shape would miss entirely. */
+const TIER_COMPARISONS: [SeverityTier, SeverityTier][] = [
+  ['healthy', 'severe'],
+  ['healthy', 'moderate'],
+  ['moderate', 'severe'],
+];
 
 /** severe: this specific call errored, or took more than 2x the slow threshold — the worst
  * experience. moderate: slow but under that 2x line, and it succeeded. healthy: everything else. */
-function severityTier(event: SequenceEvent): 'healthy' | 'moderate' | 'severe' {
+function severityTier(event: SequenceEvent): SeverityTier {
   if (event.status >= 400 || event.durMs > SLOW_P95_THRESHOLD_MS * 2) return 'severe';
   if (event.durMs > SLOW_P95_THRESHOLD_MS) return 'moderate';
   return 'healthy';
@@ -371,17 +384,23 @@ function severityTier(event: SequenceEvent): 'healthy' | 'moderate' | 'severe' {
  * For each step in the flow, checks whether sessions that experienced a slow/errored call at that
  * specific step were less likely to continue than sessions where it was fine — a correlation
  * between a technical problem and people actually giving up, not just a cost estimate. This is
- * deliberately conservative: both the healthy and severe groups must clear MIN_GROUP_SIZE, and
- * the gap must clear MEANINGFUL_GAP, before anything is reported. When the moderate (mildly slow)
- * tier also has enough sessions and its continuation rate falls between the other two, that's
- * included too — a three-tier gradient is stronger evidence than a single two-group comparison.
+ * deliberately conservative: both compared groups must clear MIN_GROUP_SIZE, and the gap must
+ * clear MEANINGFUL_GAP, before anything is reported.
+ *
+ * Which two tiers get compared adapts to the data (see TIER_COMPARISONS) rather than always being
+ * healthy vs. severe — an endpoint that's consistently moderately slow but never truly severe
+ * would otherwise never produce a signal at all, even with an obvious real pattern sitting in
+ * healthy vs. moderate. When the remaining third tier also has enough sessions, and the full
+ * three-tier ordering (healthy, then moderate, then severe) declines step by step, that's included
+ * too — a gradient across all three severity levels is stronger evidence than a two-tier
+ * comparison alone.
  *
  * "Continued" means two different things depending on the step: for any step before the last,
- * it's reaching the specific next step in this mined flow (same as before). For the *last* step,
- * there is no next mined step to check — so it means the session did anything at all afterward.
- * Without that distinction, a flow that ends at a slow endpoint (a very common, real shape — see
- * e.g. a flow ending at a chronically slow balance-lookup call) would be structurally invisible
- * to this check, since the drop-off there happens before a next mined step could ever be reached.
+ * it's reaching the specific next step in this mined flow. For the *last* step, there is no next
+ * mined step to check — so it means the session did anything at all afterward. Without that
+ * distinction, a flow that ends at a slow endpoint (a very common, real shape — see e.g. a flow
+ * ending at a chronically slow balance-lookup call) would be structurally invisible to this check,
+ * since the drop-off there happens before a next mined step could ever be reached.
  */
 export function computeDropOffSignals(flow: MinedFlow, sessions: MergedSession[]): DropOffSignal[] {
   if (flow.steps.length === 0) return [];
@@ -397,7 +416,7 @@ export function computeDropOffSignals(flow: MinedFlow, sessions: MergedSession[]
     // function exists to find). Mirrors buildFunnel's own prefix-based reach counting.
     const reachedStep = sessions.filter((s) => isOrderedSubsequence(prefix, s.steps));
 
-    const byTier: Record<'healthy' | 'moderate' | 'severe', { session: MergedSession; event: SequenceEvent }[]> = {
+    const byTier: Record<SeverityTier, { session: MergedSession; event: SequenceEvent }[]> = {
       healthy: [],
       moderate: [],
       severe: [],
@@ -415,33 +434,52 @@ export function computeDropOffSignals(flow: MinedFlow, sessions: MergedSession[]
           : isOrderedSubsequence(nextPrefix!, session.steps)
       ).length;
 
-    if (byTier.healthy.length < MIN_GROUP_SIZE || byTier.severe.length < MIN_GROUP_SIZE) continue;
+    const rateOf = (tier: SeverityTier) => {
+      const group = byTier[tier];
+      if (group.length < MIN_GROUP_SIZE) return null;
+      const continuedCount = continuedCountOf(group);
+      return { sessionCount: group.length, continuedCount, rate: continuedCount / group.length };
+    };
 
-    const healthyContinuedCount = continuedCountOf(byTier.healthy);
-    const severeContinuedCount = continuedCountOf(byTier.severe);
-    const healthyRate = healthyContinuedCount / byTier.healthy.length;
-    const severeRate = severeContinuedCount / byTier.severe.length;
+    for (const [lowerTier, higherTier] of TIER_COMPARISONS) {
+      const lower = rateOf(lowerTier);
+      const higher = rateOf(higherTier);
+      if (!lower || !higher) continue;
+      if (lower.rate - higher.rate < MEANINGFUL_GAP) continue;
 
-    if (healthyRate - severeRate < MEANINGFUL_GAP) continue;
-
-    let moderate: DropOffSignal['moderate'] = null;
-    if (byTier.moderate.length >= MIN_GROUP_SIZE) {
-      const moderateContinuedCount = continuedCountOf(byTier.moderate);
-      const moderateRate = moderateContinuedCount / byTier.moderate.length;
-      if (moderateRate <= healthyRate && moderateRate >= severeRate) {
-        moderate = { sessionCount: byTier.moderate.length, continuedCount: moderateContinuedCount };
+      const remainingTier = TIER_ORDER.find((t) => t !== lowerTier && t !== higherTier)!;
+      const third = rateOf(remainingTier);
+      let thirdTier: DropOffSignal['thirdTier'] = null;
+      if (third) {
+        // Check the full healthy -> moderate -> severe ordering (using whichever of the three
+        // rates are available) declines step by step, not just that the remaining tier falls
+        // "between" the chosen pair — since the missing tier isn't necessarily the middle one
+        // (e.g. comparing moderate vs. severe, the missing tier — healthy — should be the mildest
+        // of all three, not sandwiched between them).
+        const ordered = [
+          { tier: lowerTier, rate: lower.rate },
+          { tier: higherTier, rate: higher.rate },
+          { tier: remainingTier, rate: third.rate },
+        ].sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier));
+        const isMonotonic = ordered[0].rate >= ordered[1].rate && ordered[1].rate >= ordered[2].rate;
+        if (isMonotonic) {
+          thirdTier = { tier: remainingTier, sessionCount: third.sessionCount, continuedCount: third.continuedCount };
+        }
       }
-    }
 
-    signals.push({
-      step,
-      isEndOfFlow,
-      healthySessionCount: byTier.healthy.length,
-      healthyContinuedCount,
-      severeSessionCount: byTier.severe.length,
-      severeContinuedCount,
-      moderate,
-    });
+      signals.push({
+        step,
+        isEndOfFlow,
+        lowerTier,
+        lowerSessionCount: lower.sessionCount,
+        lowerContinuedCount: lower.continuedCount,
+        higherTier,
+        higherSessionCount: higher.sessionCount,
+        higherContinuedCount: higher.continuedCount,
+        thirdTier,
+      });
+      break; // use the first (widest-contrast) qualifying comparison for this step, not all of them
+    }
   }
 
   return signals;

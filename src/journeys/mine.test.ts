@@ -344,11 +344,13 @@ describe('computeDropOffSignals', () => {
     expect(signals[0]).toEqual({
       step: '/api/step-a',
       isEndOfFlow: false,
-      healthySessionCount: 10,
-      healthyContinuedCount: 9,
-      severeSessionCount: 10,
-      severeContinuedCount: 3,
-      moderate: null,
+      lowerTier: 'healthy',
+      lowerSessionCount: 10,
+      lowerContinuedCount: 9,
+      higherTier: 'severe',
+      higherSessionCount: 10,
+      higherContinuedCount: 3,
+      thirdTier: null,
     });
   });
 
@@ -415,11 +417,13 @@ describe('computeDropOffSignals', () => {
     expect(signals[0]).toEqual({
       step: '/api/step-b',
       isEndOfFlow: true,
-      healthySessionCount: 10,
-      healthyContinuedCount: 9,
-      severeSessionCount: 10,
-      severeContinuedCount: 2,
-      moderate: null,
+      lowerTier: 'healthy',
+      lowerSessionCount: 10,
+      lowerContinuedCount: 9,
+      higherTier: 'severe',
+      higherSessionCount: 10,
+      higherContinuedCount: 2,
+      thirdTier: null,
     });
   });
 
@@ -432,6 +436,54 @@ describe('computeDropOffSignals', () => {
     const signals = computeDropOffSignals(FLOW, mergeSessionsById(rows));
 
     expect(signals).toHaveLength(1);
-    expect(signals[0].moderate).toEqual({ sessionCount: 10, continuedCount: 6 });
+    expect(signals[0].lowerTier).toBe('healthy');
+    expect(signals[0].higherTier).toBe('severe');
+    expect(signals[0].thirdTier).toEqual({ tier: 'moderate', sessionCount: 10, continuedCount: 6 });
+  });
+
+  it('falls back to healthy vs. moderate when the endpoint never actually gets severely slow', () => {
+    // The real case this was built for: an endpoint that's consistently moderately slow but never
+    // crosses the "severe" line (2x the threshold) — the severe tier is permanently empty here, so
+    // a healthy-vs-severe-only check would never fire even though a real pattern exists.
+    const rows: SessionTraceRow[] = [
+      ...Array.from({ length: 10 }, (_, i) => makeSession(`healthy-${i}`, 200, 200, i < 9)), // 90%
+      ...Array.from({ length: 10 }, (_, i) => makeSession(`moderate-${i}`, 1400, 200, i < 3)), // 30%, gap 60pts
+    ];
+    const signals = computeDropOffSignals(FLOW, mergeSessionsById(rows));
+
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toEqual({
+      step: '/api/step-a',
+      isEndOfFlow: false,
+      lowerTier: 'healthy',
+      lowerSessionCount: 10,
+      lowerContinuedCount: 9,
+      higherTier: 'moderate',
+      higherSessionCount: 10,
+      higherContinuedCount: 3,
+      thirdTier: null, // severe tier has 0 sessions, well under MIN_GROUP_SIZE
+    });
+  });
+
+  it('falls back to moderate vs. severe when there are too few healthy sessions to check', () => {
+    const rows: SessionTraceRow[] = [
+      ...Array.from({ length: 3 }, (_, i) => makeSession(`healthy-${i}`, 200, 200, true)), // too few to use
+      ...Array.from({ length: 10 }, (_, i) => makeSession(`moderate-${i}`, 1400, 200, i < 8)), // 80%
+      ...Array.from({ length: 10 }, (_, i) => makeSession(`severe-${i}`, 3000, 200, i < 1)), // 10%, gap 70pts
+    ];
+    const signals = computeDropOffSignals(FLOW, mergeSessionsById(rows));
+
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toEqual({
+      step: '/api/step-a',
+      isEndOfFlow: false,
+      lowerTier: 'moderate',
+      lowerSessionCount: 10,
+      lowerContinuedCount: 8,
+      higherTier: 'severe',
+      higherSessionCount: 10,
+      higherContinuedCount: 1,
+      thirdTier: null, // only 3 healthy sessions, under MIN_GROUP_SIZE
+    });
   });
 });

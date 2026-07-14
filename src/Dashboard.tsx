@@ -29,7 +29,7 @@ import { computeWeeklyTrend } from './insights/trends';
 import { fetchDailyRollups, fetchEndpointStats, fetchSessionTraces, fetchViolations } from './insights/fetchLive';
 import type { EndpointDailyRollupRow, EndpointInsight, EndpointStatsRow, Insights, WeeklyTrendPoint } from './insights/types';
 import { mineJourneys } from './journeys/mine';
-import type { Funnel, JourneyFlow, JourneysResult, SessionTraceRow } from './journeys/types';
+import type { Funnel, JourneyFlow, JourneysResult, SessionTraceRow, SeverityTier } from './journeys/types';
 import type { User } from '@supabase/supabase-js';
 
 const TIME_RANGE_MS = 24 * 60 * 60 * 1000;
@@ -86,6 +86,12 @@ const SEVERITY_COLOR: Record<RecommendationItem['severity'], string> = {
   high: 'bg-red-900 text-red-300',
   medium: 'bg-yellow-900 text-yellow-300',
   low: 'bg-gray-800 text-gray-300',
+};
+
+const SEVERITY_TIER_LABEL: Record<SeverityTier, string> = {
+  healthy: 'healthy',
+  moderate: 'moderately slow',
+  severe: 'severely slow or failed',
 };
 
 /** Shared hover tooltip, rendered via a portal into document.body rather than positioned
@@ -743,24 +749,24 @@ const JourneyCard: React.FC<{
     {journey.dropOffSignals.length > 0 && (
       <div className="mt-3 space-y-2">
         {journey.dropOffSignals.map((sig) => {
-          const healthyRate = Math.round((sig.healthyContinuedCount / sig.healthySessionCount) * 100);
-          const severeRate = Math.round((sig.severeContinuedCount / sig.severeSessionCount) * 100);
+          const lowerRate = Math.round((sig.lowerContinuedCount / sig.lowerSessionCount) * 100);
+          const higherRate = Math.round((sig.higherContinuedCount / sig.higherSessionCount) * 100);
           const lead = sig.isEndOfFlow
-            ? `Sessions were more likely to end there entirely after a slow/failed response at `
-            : `Sessions were less likely to continue after a slow/failed response at `;
+            ? `Sessions were more likely to end there entirely after a `
+            : `Sessions were less likely to continue after a `;
           return (
             <p key={sig.step} className="text-xs text-orange-400">
               {lead}
-              <code>{sig.step}</code>
+              {SEVERITY_TIER_LABEL[sig.higherTier]} response at <code>{sig.step}</code>
               {sig.isEndOfFlow && ' (the last step of this flow)'} &mdash;{' '}
-              {sig.healthyContinuedCount}/{sig.healthySessionCount} ({healthyRate}%) went on to do something else when
-              it was healthy, vs {sig.severeContinuedCount}/{sig.severeSessionCount} ({severeRate}%) when it
-              wasn&apos;t
-              {sig.moderate && (
+              {sig.lowerContinuedCount}/{sig.lowerSessionCount} ({lowerRate}%) went on to do something else when it
+              was {SEVERITY_TIER_LABEL[sig.lowerTier]}, vs {sig.higherContinuedCount}/{sig.higherSessionCount} (
+              {higherRate}%) when it was {SEVERITY_TIER_LABEL[sig.higherTier]}
+              {sig.thirdTier && (
                 <>
-                  , and {sig.moderate.continuedCount}/{sig.moderate.sessionCount} (
-                  {Math.round((sig.moderate.continuedCount / sig.moderate.sessionCount) * 100)}%) when it was only
-                  moderately slow &mdash; a step-by-step decline
+                  , and {sig.thirdTier.continuedCount}/{sig.thirdTier.sessionCount} (
+                  {Math.round((sig.thirdTier.continuedCount / sig.thirdTier.sessionCount) * 100)}%) when it was{' '}
+                  {SEVERITY_TIER_LABEL[sig.thirdTier.tier]} &mdash; a step-by-step decline
                 </>
               )}
               . <span className="text-gray-500">An observed pattern, not proven cause and effect.</span>

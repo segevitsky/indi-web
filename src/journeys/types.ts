@@ -61,24 +61,34 @@ export interface RepeatedStep {
   pages: string[];
 }
 
+export type SeverityTier = 'healthy' | 'moderate' | 'severe';
+
 /** Evidence that a slow/errored occurrence of `step` correlates with sessions not continuing —
  * a checkable pattern, not proof of cause and effect. Raw counts, not pre-computed rates, so the
- * underlying sample sizes are always visible alongside the claim. `moderate` is present only when
- * the moderately-slow tier also had enough sessions to check, and its continuation rate fell
- * between the healthy and severe tiers' — a three-tier gradient is stronger evidence than a
- * single two-group comparison. `isEndOfFlow` distinguishes what "continued" means: for a step
- * with a next step in the mined flow, it means reaching that specific next step; for the flow's
- * last step, there is no next mined step to check, so it means the session did anything at all
- * afterward — otherwise a flow that *ends* at a slow endpoint (a common, real shape) would be
- * invisible to this check entirely. */
+ * underlying sample sizes are always visible alongside the claim.
+ *
+ * `lowerTier`/`higherTier` name which two severity tiers were actually compared — not always
+ * healthy vs. severe. Some endpoints have a genuinely extreme slow/error tail (severe has enough
+ * sessions to check); others are just consistently moderately slow and never that extreme, so the
+ * comparison falls back to healthy vs. moderate instead of going silent. `thirdTier` is included
+ * only when the remaining tier also had enough sessions, and the full three-tier ordering
+ * (healthy, then moderate, then severe) declines step by step — a gradient across all three
+ * severity levels is stronger evidence than a single two-tier comparison.
+ *
+ * `isEndOfFlow` distinguishes what "continued" means: for a step with a next step in the mined
+ * flow, it means reaching that specific next step; for the flow's last step, there is no next
+ * mined step to check, so it means the session did anything at all afterward — otherwise a flow
+ * that *ends* at a slow endpoint (a common, real shape) would be invisible to this check entirely. */
 export interface DropOffSignal {
   step: string;
   isEndOfFlow: boolean;
-  healthySessionCount: number;
-  healthyContinuedCount: number;
-  severeSessionCount: number;
-  severeContinuedCount: number;
-  moderate: { sessionCount: number; continuedCount: number } | null;
+  lowerTier: SeverityTier;
+  lowerSessionCount: number;
+  lowerContinuedCount: number;
+  higherTier: SeverityTier;
+  higherSessionCount: number;
+  higherContinuedCount: number;
+  thirdTier: { tier: SeverityTier; sessionCount: number; continuedCount: number } | null;
 }
 
 export interface JourneyFlow {
