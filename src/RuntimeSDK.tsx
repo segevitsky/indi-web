@@ -6,32 +6,32 @@ import { Terminal, Eye, DollarSign, CheckCircle2 } from 'lucide-react';
 import Blobi from './Blobi';
 
 // Types
+// Deliberately two inputs, not four: almost every company knows its monthly infra bill, but
+// almost none know their daily API call count or per-call cloud cost off the top of their head —
+// and nobody who hasn't installed Indi yet can know their own duplicate/retry rate, since that's
+// the thing Indi measures for them. wastePercent is explicitly the visitor's own hypothetical,
+// not a claimed industry average — we don't have the real customer data yet to back one up.
 interface CalculatorState {
-  dailyApiCalls: number;
-  duplicateRate: number;
-  retryRate: number;
-  costPerCall: number;
+  monthlyInfraSpend: number;
+  wastePercent: number;
 }
 
 interface WasteNumbers {
-  duplicateCost: number;
-  retryCost: number;
-  totalDaily: number;
+  monthlySavings: number;
+  annualSavings: number;
 }
 
 interface CalculatorResult {
-  dailyDuplicates: string;
-  dailyRetries: string;
-  totalDaily: string;
+  monthlySavings: string;
+  annualSavings: string;
 }
 
 // Default example used by the calculator and by the static preview sections below it,
-// so both stay mathematically consistent with each other.
+// so both stay mathematically consistent with each other. $10,000/mo also matches the demo
+// team's real Settings value in the actual dashboard.
 const DEFAULT_CALCULATOR_STATE: CalculatorState = {
-  dailyApiCalls: 100000,
-  duplicateRate: 35,
-  retryRate: 8,
-  costPerCall: 0.0004,
+  monthlyInfraSpend: 10000,
+  wastePercent: 15,
 };
 
 // Utility function to format currency
@@ -42,48 +42,22 @@ const formatCurrency = (num: number): string => {
   return '$' + num.toFixed(0);
 };
 
-// Utility function to format a plain count (no currency sign)
-const formatCount = (num: number): string => {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-  if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
-  return num.toFixed(0);
-};
-
-// Calculate raw waste numbers from API metrics
+// Same formula the real, installed dashboard uses (wasteRatio x infraCostPerMonth) — just with a
+// hypothetical percentage here instead of a measured one.
 const computeWaste = (state: CalculatorState): WasteNumbers => {
-  const duplicateCalls = state.dailyApiCalls * (state.duplicateRate / 100);
-  const duplicateCost = duplicateCalls * state.costPerCall;
-
-  const failedCalls = state.dailyApiCalls * (state.retryRate / 100);
-  const retryCost = failedCalls * 2 * state.costPerCall;
-
-  return { duplicateCost, retryCost, totalDaily: duplicateCost + retryCost };
+  const monthlySavings = state.monthlyInfraSpend * (state.wastePercent / 100);
+  return { monthlySavings, annualSavings: monthlySavings * 12 };
 };
 
 const formatWaste = (waste: WasteNumbers): CalculatorResult => ({
-  dailyDuplicates: formatCurrency(waste.duplicateCost),
-  dailyRetries: formatCurrency(waste.retryCost),
-  totalDaily: formatCurrency(waste.totalDaily),
+  monthlySavings: formatCurrency(waste.monthlySavings),
+  annualSavings: formatCurrency(waste.annualSavings),
 });
 
 // SVG Icons
-const UserIcon = () => (
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
-    <circle cx="50" cy="35" r="12" fill="white" />
-    <path d="M 30 55 Q 30 50 50 50 Q 70 50 70 55 L 70 70 Q 70 75 65 75 L 35 75 Q 30 75 30 70 Z" fill="white" />
-  </svg>
-);
-
 const StarIcon = () => (
   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
     <path d="M 50 20 L 60 40 L 80 40 L 65 55 L 72 75 L 50 60 L 28 75 L 35 55 L 20 40 L 40 40 Z" fill="white" />
-  </svg>
-);
-
-const CheckIcon = () => (
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
-    <path d="M 30 50 L 45 65 L 70 35" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-    <circle cx="50" cy="50" r="28" fill="none" stroke="white" strokeWidth="2" />
   </svg>
 );
 
@@ -178,69 +152,37 @@ const CalculatorSection: React.FC = () => {
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center">
-                  <UserIcon />
+                  <DollarIcon />
                 </div>
-                <label className="text-xs font-bold text-gray-900 uppercase tracking-wide">Daily API Calls</label>
+                <label className="text-xs font-bold text-gray-900 uppercase tracking-wide">Monthly Infrastructure Spend</label>
               </div>
               <input
                 type="number"
-                value={state.dailyApiCalls}
-                onChange={(e) => handleInputChange('dailyApiCalls', parseFloat(e.target.value))}
+                value={state.monthlyInfraSpend}
+                onChange={(e) => handleInputChange('monthlyInfraSpend', parseFloat(e.target.value))}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-semibold text-gray-900 focus:outline-none focus:border-purple-600 focus:bg-white transition"
               />
-              <p className="text-xs text-gray-600 mt-2">Total API calls per day across your app</p>
+              <p className="text-xs text-gray-600 mt-2">What you pay your cloud provider per month — check your AWS/GCP/hosting bill</p>
             </div>
 
-            {/* Duplicate Rate */}
+            {/* Estimated Waste % */}
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
                   <StarIcon />
                 </div>
-                <label className="text-xs font-bold text-gray-900 uppercase tracking-wide">Duplicate Call Rate</label>
+                <label className="text-xs font-bold text-gray-900 uppercase tracking-wide">Estimated Waste %</label>
               </div>
               <input
                 type="number"
-                value={state.duplicateRate}
-                onChange={(e) => handleInputChange('duplicateRate', parseFloat(e.target.value))}
+                value={state.wastePercent}
+                onChange={(e) => handleInputChange('wastePercent', parseFloat(e.target.value))}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-semibold text-gray-900 focus:outline-none focus:border-purple-600 focus:bg-white transition"
               />
-              <p className="text-xs text-gray-600 mt-2">What % of calls are unnecessary duplicates? (Indi detects this)</p>
-            </div>
-
-            {/* Retry/Error Rate */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center">
-                  <CheckIcon />
-                </div>
-                <label className="text-xs font-bold text-gray-900 uppercase tracking-wide">Retry/Error Rate</label>
-              </div>
-              <input
-                type="number"
-                value={state.retryRate}
-                onChange={(e) => handleInputChange('retryRate', parseFloat(e.target.value))}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-semibold text-gray-900 focus:outline-none focus:border-purple-600 focus:bg-white transition"
-              />
-              <p className="text-xs text-gray-600 mt-2">What % of calls fail and need to retry? (Indi detects this)</p>
-            </div>
-
-            {/* API Cost Per Call */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center">
-                  <DollarIcon />
-                </div>
-                <label className="text-xs font-bold text-gray-900 uppercase tracking-wide">API Cost Per Call</label>
-              </div>
-              <input
-                type="number"
-                step="0.00001"
-                value={state.costPerCall}
-                onChange={(e) => handleInputChange('costPerCall', parseFloat(e.target.value))}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-semibold text-gray-900 focus:outline-none focus:border-purple-600 focus:bg-white transition"
-              />
-              <p className="text-xs text-gray-600 mt-2">What do you pay your cloud provider per call? (Check your AWS/GCP bill)</p>
+              <p className="text-xs text-gray-600 mt-2">
+                Your own estimate — what % of that spend might be going to duplicate calls, slow endpoints, or errors?
+                Indi measures your real number once installed; nobody can know it before then.
+              </p>
             </div>
           </div>
 
@@ -248,24 +190,18 @@ const CalculatorSection: React.FC = () => {
           <div className="h-px bg-gray-200 my-8"></div>
 
           {/* Results */}
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-6">Real Infrastructure Waste</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-6">Hypothetical Savings</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-l-4 border-purple-600">
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Daily Waste from Duplicates</p>
-              <p className="text-3xl font-bold text-gray-900 mb-1">{results.dailyDuplicates}</p>
-              <p className="text-sm text-gray-600">calls you shouldn't make</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-l-4 border-red-500">
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Daily Cost of Retries</p>
-              <p className="text-3xl font-bold text-gray-900 mb-1">{results.dailyRetries}</p>
-              <p className="text-sm text-gray-600">failed calls + retry attempts</p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Monthly Savings</p>
+              <p className="text-3xl font-bold text-gray-900 mb-1">{results.monthlySavings}</p>
+              <p className="text-sm text-gray-600">if that % of your spend is genuinely wasted</p>
             </div>
 
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-l-4 border-teal-500">
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Daily Total Waste</p>
-              <p className="text-3xl font-bold text-gray-900 mb-1">{results.totalDaily}</p>
-              <p className="text-sm text-gray-600">real money you're paying for nothing</p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Annual Savings</p>
+              <p className="text-3xl font-bold text-gray-900 mb-1">{results.annualSavings}</p>
+              <p className="text-sm text-gray-600">same math, one year out</p>
             </div>
           </div>
 
@@ -273,10 +209,10 @@ const CalculatorSection: React.FC = () => {
           <div className="bg-teal-50 border-l-4 border-teal-600 rounded-lg p-6 mt-8">
             <p className="font-bold text-gray-900 mb-2">What This Calculation Shows</p>
             <p className="text-sm text-gray-700 mb-2">
-              This is a simplified planning estimate — a flat cost-per-call applied to your duplicate and retry rates, so you can get a rough number before installing anything. Indi genuinely detects duplicates and retries automatically.
-            </p>
-            <p className="text-sm text-gray-700 mb-2">
-              <strong>Once installed, the real calculation goes further:</strong> it weighs a slow, expensive call's waste more heavily than a fast one's, and expresses your savings as a share of the infrastructure cost you report — not an invented per-call rate.
+              This is your own hypothetical — you pick a waste %, we apply it to your real monthly spend. It's the
+              exact same formula the real, installed dashboard uses: your measured waste ratio × your reported
+              infrastructure cost. The only difference is that number is a guess here, and a genuine measurement
+              once Indi is actually watching your traffic.
             </p>
             <p className="text-sm text-gray-700">
               <strong>What this does NOT include:</strong> business impact, lost customers, or productivity costs. Those vary wildly by business and only you can calculate them.
@@ -291,7 +227,6 @@ const CalculatorSection: React.FC = () => {
 // Dashboard Preview Section
 // Mirrors the calculator's default example so the numbers never drift apart.
 const DASHBOARD_WASTE = computeWaste(DEFAULT_CALCULATOR_STATE);
-const DASHBOARD_ANNUAL_WASTE = DASHBOARD_WASTE.totalDaily * 365;
 
 const DashboardSection: React.FC = () => (
   <section id="demo" className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-12 px-6">
@@ -299,25 +234,25 @@ const DashboardSection: React.FC = () => (
       {/* Dashboard Card */}
       <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg mb-8">
         <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
-          <h3 className="text-lg font-bold text-gray-900">Your API Performance</h3>
-          <p className="text-sm text-gray-600">{formatCount(DEFAULT_CALCULATOR_STATE.dailyApiCalls)} daily requests</p>
+          <h3 className="text-lg font-bold text-gray-900">Your Cost Overview</h3>
+          <p className="text-sm text-gray-600">{formatCurrency(DEFAULT_CALCULATOR_STATE.monthlyInfraSpend)}/mo infra spend</p>
         </div>
 
         {/* Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 border-l-4 border-purple-600">
-            <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Daily Requests</p>
-            <p className="text-2xl font-bold text-gray-900 mb-1">{formatCount(DEFAULT_CALCULATOR_STATE.dailyApiCalls)}</p>
+            <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Monthly Infra Spend</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(DEFAULT_CALCULATOR_STATE.monthlyInfraSpend)}</p>
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 border-l-4 border-red-500">
-            <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Daily Waste</p>
-            <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(DASHBOARD_WASTE.totalDaily)}</p>
-            <p className="text-xs text-gray-600">from duplicates & retries</p>
+            <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Estimated Waste</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{DEFAULT_CALCULATOR_STATE.wastePercent}%</p>
+            <p className="text-xs text-gray-600">of that spend</p>
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 border-l-4 border-teal-600">
-            <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Duplicate Rate</p>
-            <p className="text-2xl font-bold text-gray-900 mb-1">{DEFAULT_CALCULATOR_STATE.duplicateRate}%</p>
-            <p className="text-xs text-gray-600">of all requests</p>
+            <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Monthly Savings</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{formatCurrency(DASHBOARD_WASTE.monthlySavings)}</p>
+            <p className="text-xs text-gray-600">if that estimate holds</p>
           </div>
         </div>
 
@@ -326,12 +261,8 @@ const DashboardSection: React.FC = () => (
           <p className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-4">What's Draining Your Budget</p>
           <div className="space-y-3">
             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-              <p className="font-bold text-gray-900">{DEFAULT_CALCULATOR_STATE.duplicateRate}% Duplicate Requests</p>
-              <p className="text-sm text-red-600 font-bold">{formatCurrency(DASHBOARD_WASTE.duplicateCost)}/day in wasted API calls</p>
-            </div>
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-              <p className="font-bold text-gray-900">{DEFAULT_CALCULATOR_STATE.retryRate}% Retry/Error Rate</p>
-              <p className="text-sm text-red-600 font-bold">{formatCurrency(DASHBOARD_WASTE.retryCost)}/day in failed + retry costs</p>
+              <p className="font-bold text-gray-900">{DEFAULT_CALCULATOR_STATE.wastePercent}% Estimated Waste</p>
+              <p className="text-sm text-red-600 font-bold">{formatCurrency(DASHBOARD_WASTE.monthlySavings)}/mo — duplicate calls, slow endpoints, and errors</p>
             </div>
             <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
               <p className="font-bold text-gray-900">Redundant Calls in User Journeys</p>
@@ -339,7 +270,7 @@ const DashboardSection: React.FC = () => (
             </div>
             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
               <p className="font-bold text-gray-900">Annual Infrastructure Waste</p>
-              <p className="text-sm text-red-600 font-bold">{formatCurrency(DASHBOARD_ANNUAL_WASTE)}/year (fixable)</p>
+              <p className="text-sm text-red-600 font-bold">{formatCurrency(DASHBOARD_WASTE.annualSavings)}/year (fixable)</p>
             </div>
           </div>
         </div>
@@ -463,11 +394,10 @@ const HowItWorksSection: React.FC = () => (
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-16">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
         {[
-          { value: formatCurrency(DASHBOARD_ANNUAL_WASTE), label: 'Annual savings', desc: 'Just from detected waste' },
-          { value: `${DEFAULT_CALCULATOR_STATE.duplicateRate}%`, label: 'Duplicate calls', desc: 'Typical reduction' },
-          { value: `${DEFAULT_CALCULATOR_STATE.retryRate}%`, label: 'Retry rate', desc: 'Targetable with fixes' },
+          { value: formatCurrency(DASHBOARD_WASTE.annualSavings), label: 'Annual savings', desc: 'In this hypothetical example' },
+          { value: `${DEFAULT_CALCULATOR_STATE.wastePercent}%`, label: 'Estimated waste', desc: 'A starting point — Indi measures your real number' },
           { value: '2hrs', label: 'To first fix', desc: 'See it. Fix it. Deploy.' },
         ].map((stat, i) => (
           <div key={i} className="bg-white rounded-2xl border border-gray-200 p-6 text-center">
