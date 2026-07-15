@@ -85,20 +85,21 @@ const HeroSection: React.FC = () => {
   );
 };
 
-// Pain Section
-// Stated plainly, before any proof or math — specific, recognizable frustrations, not generic
-// "APIs are hard" copy, so the page earns attention before asking for trust.
-const PainSection: React.FC = () => (
+// Discover Section
+// Framed as capability, not a claim about the reader's problems — each line is a preview of one
+// of the three proof sections further down the page (cost, behavior, learning system), so nothing
+// here is asserted without being demonstrated shortly after.
+const DiscoverSection: React.FC = () => (
   <section className="bg-white py-12 px-6 border-b border-gray-100">
     <div className="max-w-5xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
-          "You know something's slow, but not whether it's actually losing you customers.",
-          'Your infra bill keeps climbing and nobody can point to exactly why.',
-          'Something breaks quietly for days before a customer complains and you find out.',
+          'Discover exactly where your money is going — and prove it, dollar for dollar.',
+          "Discover how people actually move through your product, and which slow moments are costing you customers.",
+          'Discover the moment something changes, before a customer has to tell you.',
         ].map((text, i) => (
           <div key={i} className="flex items-start gap-3">
-            <span className="text-red-500 font-bold text-xl flex-shrink-0">×</span>
+            <span className="text-purple-600 font-bold text-xl flex-shrink-0">→</span>
             <p className="text-gray-700 text-base">{text}</p>
           </div>
         ))}
@@ -435,7 +436,7 @@ const RuntimeSDK: React.FC = () => (
   <div className="w-full">
     <Navigation />
     <HeroSection />
-    <PainSection />
+    <DiscoverSection />
     <DashboardSection />
     <JourneyShowcaseSection />
     <UnusualActivityShowcaseSection />
