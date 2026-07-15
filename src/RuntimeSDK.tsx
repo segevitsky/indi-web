@@ -28,12 +28,12 @@ const formatCurrency = (num: number): string => {
 
 // Navigation Component
 const Navigation: React.FC = () => (
-  <nav className="flex justify-between items-center px-12 py-6 bg-white border-b border-gray-200">
+  <nav className="flex justify-between items-center px-4 sm:px-6 lg:px-12 py-4 sm:py-6 bg-white border-b border-gray-200">
     <div className="flex items-center gap-2">
       <Blobi emotion="happy" size={32} showBadge={false} />
       <span className="text-xl font-bold text-purple-600">INDI</span>
     </div>
-    <div className="flex gap-10 text-sm">
+    <div className="hidden md:flex gap-6 lg:gap-10 text-sm">
       <a href="#demo" className="text-gray-600 hover:text-purple-600 transition">
         See it in action
       </a>
@@ -56,17 +56,17 @@ const HeroSection: React.FC = () => {
   };
 
   return (
-    <section className="bg-white py-16 px-12">
+    <section className="bg-white py-12 sm:py-16 px-4 sm:px-6 lg:px-12">
       <div className="max-w-4xl mx-auto text-center">
         <div className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-4">
           Your App&apos;s Personal Analyst
         </div>
         <div className="text-sm font-medium text-gray-600 mb-4">Stop wasting money on broken APIs</div>
-        <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">See exactly what's costing you</h1>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">See exactly what's costing you</h1>
         <p className="text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto">
           Duplicate requests, slow endpoints, and redundant calls hiding in how your users actually move through your product — Indi watches real behavior, not just raw API logs, and shows you the exact cost of every inefficiency, with fixes grounded in how people really use your app.
         </p>
-        <div className="flex gap-4 justify-center mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
           <button
             onClick={() => navigate('/register')}
             className="px-7 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition"
@@ -90,7 +90,7 @@ const HeroSection: React.FC = () => {
 // of the three proof sections further down the page (cost, behavior, learning system), so nothing
 // here is asserted without being demonstrated shortly after.
 const DiscoverSection: React.FC = () => (
-  <section className="bg-white py-12 px-6 border-b border-gray-100">
+  <section className="bg-white py-12 px-4 sm:px-6 border-b border-gray-100">
     <div className="max-w-5xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
@@ -112,14 +112,14 @@ const DiscoverSection: React.FC = () => (
 // A single static, illustrative example (ILLUSTRATIVE_EXAMPLE) — modeled on real-shaped numbers,
 // never a visitor's own guess. Every figure here is labeled as measured, not asked-for.
 const DashboardSection: React.FC = () => (
-  <section id="demo" className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-12 px-6">
+  <section id="demo" className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-12 px-4 sm:px-6">
     <div className="max-width mx-auto max-w-6xl">
       <p className="text-center text-sm text-gray-500 mb-6">
         A real-shaped example of what Indi finds — not your numbers, and not something you type in.
       </p>
       {/* Dashboard Card */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg mb-8">
-        <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
+      <div className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-8 shadow-lg mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 mb-8 pb-6 border-b border-gray-200">
           <h3 className="text-lg font-bold text-gray-900">Your Cost Overview</h3>
           <p className="text-sm text-gray-600">{formatCurrency(ILLUSTRATIVE_EXAMPLE.monthlyInfraSpend)}/mo infra spend</p>
         </div>
@@ -194,14 +194,14 @@ const JOURNEY_EXAMPLE_STEPS: { step: string; screen: string; pct: number }[] = [
 ];
 
 const JourneyShowcaseSection: React.FC = () => (
-  <section className="bg-white py-20 px-6">
+  <section className="bg-white py-14 sm:py-20 px-4 sm:px-6">
     <div className="max-w-4xl mx-auto">
-      <h2 className="text-4xl font-bold text-center text-gray-900 mb-3">Not Just API Logs — Real User Behavior</h2>
+      <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-3">Not Just API Logs — Real User Behavior</h2>
       <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
         Indi doesn't just watch individual calls — it maps how real users move through your product, session by session, to find waste hiding in the patterns, not just the raw numbers.
       </p>
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-8 shadow-sm">
-        <code className="text-sm font-mono text-gray-700 block mb-6">
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-5 sm:p-8 shadow-sm">
+        <code className="text-xs sm:text-sm font-mono text-gray-700 block mb-6 break-words">
           /api/people/:id → /api/org-chart → /api/people/:id → /api/people/:id
         </code>
         <div className="space-y-3 mb-6">
@@ -229,8 +229,8 @@ const JourneyShowcaseSection: React.FC = () => (
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-8 shadow-sm mt-6">
-        <code className="text-sm font-mono text-gray-700 block mb-4">
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-5 sm:p-8 shadow-sm mt-6">
+        <code className="text-xs sm:text-sm font-mono text-gray-700 block mb-4 break-words">
           /api/people/:id → /api/time-off/balance/:id
         </code>
         <p className="text-sm text-gray-600 mb-4">
@@ -268,24 +268,24 @@ const UnusualActivityShowcaseSection: React.FC = () => {
   const maxCalls = Math.max(...UNUSUAL_ACTIVITY_EXAMPLE.map((d) => d.calls));
 
   return (
-    <section className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-20 px-6">
+    <section className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-14 sm:py-20 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-4xl font-bold text-center text-gray-900 mb-3">Knows What's Normal For You</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-3">Knows What's Normal For You</h2>
         <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
           Indi remembers every day, forever — so it knows what a normal day looks like for every part of your app,
           and notices the moment something isn't. Compared only to that endpoint's own history, never to anything
           else.
         </p>
-        <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
-          <code className="text-sm font-mono text-gray-700 block mb-6">GET /api/checkout</code>
-          <div className="flex items-end gap-2 h-40 mb-6">
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-8 shadow-lg">
+          <code className="text-xs sm:text-sm font-mono text-gray-700 block mb-6">GET /api/checkout</code>
+          <div className="flex items-end gap-1 sm:gap-2 h-32 sm:h-40 mb-6">
             {UNUSUAL_ACTIVITY_EXAMPLE.map((d, i) => (
               <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
                 <div
                   className={`w-full rounded-t ${d.isToday ? 'bg-red-500' : 'bg-purple-300'}`}
                   style={{ height: `${Math.max((d.calls / maxCalls) * 100, 3)}%` }}
                 />
-                <span className={`text-[10px] mt-1 ${d.isToday ? 'text-red-600 font-bold' : 'text-gray-500'}`}>{d.day}</span>
+                <span className={`text-[9px] sm:text-[10px] mt-1 ${d.isToday ? 'text-red-600 font-bold' : 'text-gray-500'}`}>{d.day}</span>
               </div>
             ))}
           </div>
@@ -304,28 +304,28 @@ const UnusualActivityShowcaseSection: React.FC = () => {
 
 // How It Works Section
 const HowItWorksSection: React.FC = () => (
-  <section id="how" className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-20 px-6">
+  <section id="how" className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 py-14 sm:py-20 px-4 sm:px-6">
     <div className="max-w-5xl mx-auto">
-      <h2 className="text-4xl font-bold text-center text-gray-900 mb-2">How Indi Works</h2>
+      <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-2">How Indi Works</h2>
       <p className="text-center text-gray-600 mb-16">Deploy once. Watch continuously. Fix everything.</p>
 
       {/* Timeline Steps */}
-      <div className="space-y-12">
+      <div className="space-y-8 md:space-y-12">
         {[
           { title: 'SDK Deploys', desc: 'Install @indi/runtime. Two lines of code. Runs silently in your production app, zero performance impact.', Icon: Terminal },
           { title: 'Watches Traffic & Journeys', desc: 'Every API call flows through — but Indi also maps full user sessions, tracking how people actually move through your product, screen by screen, not just isolated requests.', Icon: Eye },
           { title: 'Calculates Waste', desc: "Weighs each inefficiency by how much it actually costs — a slow call counts for more than a fast one — and expresses savings as a share of the infrastructure spend you report.", Icon: DollarSign },
           { title: 'AI Recommends the Fix', desc: 'Recommendations are grounded in real behavior patterns, like "managers re-fetch the same profile 3x per session" — not generic advice. Ship the fix in hours.', Icon: CheckCircle2 },
         ].map((step, i) => (
-          <div key={i} className={`flex gap-8 ${i % 2 === 1 ? 'flex-row-reverse' : ''}`}>
-            <div className="flex-1">
-              <div className="bg-white rounded-2xl p-8 shadow-sm">
+          <div key={i} className={`flex flex-col md:flex-row items-center gap-4 md:gap-8 ${i % 2 === 1 ? 'md:flex-row-reverse' : ''}`}>
+            <div className="flex-1 w-full">
+              <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm">
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
                 <p className="text-gray-600">{step.desc}</p>
               </div>
             </div>
             <div className="flex-0 flex items-center justify-center">
-              <div className="w-24 h-24 rounded-full bg-white shadow-md flex items-center justify-center border-4 border-gray-50">
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white shadow-md flex items-center justify-center border-4 border-gray-50">
                 <step.Icon className="w-9 h-9 text-purple-600" />
               </div>
             </div>
@@ -353,9 +353,9 @@ const HowItWorksSection: React.FC = () => (
 
 // Why It Works Section
 const WhyItWorksSection: React.FC = () => (
-  <section className="bg-gradient-to-br from-orange-50 to-gray-100 py-16 px-6 border-t border-b border-gray-200">
+  <section className="bg-gradient-to-br from-orange-50 to-gray-100 py-16 px-4 sm:px-6 border-t border-b border-gray-200">
     <div className="max-w-6xl mx-auto">
-      <h2 className="text-4xl font-bold text-gray-900 mb-3">Why Indi Works</h2>
+      <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Why Indi Works</h2>
       <p className="text-gray-600 mb-8">Real production data. Real cost math. No guesses.</p>
       <ul className="space-y-3">
         {[
@@ -367,7 +367,7 @@ const WhyItWorksSection: React.FC = () => (
           'Privacy first—we never see your actual data',
           'Works with any backend, any API',
         ].map((item, i) => (
-          <li key={i} className="text-lg text-gray-900 flex items-start gap-4">
+          <li key={i} className="text-base sm:text-lg text-gray-900 flex items-start gap-4">
             <span className="text-purple-600 font-bold text-2xl flex-shrink-0">→</span>
             <span>{item}</span>
           </li>
@@ -379,11 +379,11 @@ const WhyItWorksSection: React.FC = () => (
 
 // Get Started Section
 const GetStartedSection: React.FC = () => (
-  <section className="py-16 px-6">
+  <section className="py-16 px-4 sm:px-6">
     <div className="max-w-6xl mx-auto">
-      <h2 className="text-4xl font-bold text-gray-900 mb-3">Get started in 4 steps</h2>
+      <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Get started in 4 steps</h2>
       <p className="text-gray-600 mb-12">Zero credit card. Zero commitment.</p>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {[
           { num: 'I', title: 'Install', desc: 'npm install @indi/runtime' },
           { num: 'II', title: 'Initialize', desc: 'Two lines of config in your app' },
@@ -408,9 +408,9 @@ const CTASection: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="bg-gradient-to-r from-purple-600 via-purple-700 to-teal-500 py-20 px-6 text-center shadow-lg">
+    <section className="bg-gradient-to-r from-purple-600 via-purple-700 to-teal-500 py-14 sm:py-20 px-4 sm:px-6 text-center shadow-lg">
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-4xl font-bold text-white mb-4">Your APIs are probably wasting money right now</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Your APIs are probably wasting money right now</h2>
         <p className="text-white text-lg mb-8 opacity-95">Find out for free. No credit card. No commitment. Takes 5 minutes.</p>
         <button
           onClick={() => navigate('/register')}
@@ -425,7 +425,7 @@ const CTASection: React.FC = () => {
 
 // Footer
 const Footer: React.FC = () => (
-  <footer className="bg-gray-900 text-white py-8 px-6 text-center text-xs">
+  <footer className="bg-gray-900 text-white py-8 px-4 sm:px-6 text-center text-xs">
     <p className="mb-2">© 2026 Indi. Built by developers who know this pain.</p>
     <p>indimapper.com | Privacy | Terms</p>
   </footer>
