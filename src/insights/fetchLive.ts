@@ -2,15 +2,19 @@ import { supabase } from '../supabase/config';
 import type { Violation } from '../supabase/config';
 import type { EndpointDailyRollupRow, EndpointStatsRow, SessionTraceRow } from './types';
 
-/** Safety cap on rows pulled per query, mirroring the same bounding philosophy as src/journeys/mine.ts. */
-const MAX_ROWS = 2000;
+/** endpoint_stats flushes roughly once a minute per endpoint under real production traffic — a
+ * customer with a modest 15-20 endpoints and a real business-hours traffic pattern can plausibly
+ * generate several thousand rows within a single 24h window. Sized with real headroom for that,
+ * not the much lighter volume our own daily-granularity test data happens to have. */
+const MAX_ROWS = 10000;
 /** Rollups cover a much longer window (e.g. 90 days) across every endpoint, so a higher cap. */
 const MAX_ROLLUP_ROWS = 5000;
 /** Sessions accumulate faster than rollup rows (dozens/day vs. one/day/endpoint), so a longer
  * window (Journeys following the timeframe picker) needs a higher cap than the 24h-only default. */
 const MAX_SESSION_ROWS = 8000;
-/** Violations are comparatively rare, but fetched over the same long window for consistency. */
-const MAX_VIOLATION_ROWS = 2000;
+/** Violations are comparatively rare in steady state, but a burst (e.g. a bad deploy) can spike
+ * fast — paged the same as everything else here rather than trusting a single .limit(). */
+const MAX_VIOLATION_ROWS = 5000;
 /** Supabase/PostgREST caps a single response at a server-side max-rows setting (this project's
  * is 1000, confirmed empirically) regardless of .limit() — so any table that can realistically
  * exceed that (rollups now, at 1380+ rows and growing forever since we deliberately don't prune;
@@ -43,20 +47,22 @@ async function fetchAllPages<T>(
 }
 
 export async function fetchEndpointStats(teamId: string, sinceMs: number): Promise<EndpointStatsRow[]> {
-  const { data, error } = await supabase
-    .from('endpoint_stats')
-    .select('*')
-    .eq('team_id', teamId)
-    .gte('window_start', sinceMs)
-    .order('window_start', { ascending: false })
-    .limit(MAX_ROWS);
-
-  if (error) {
-    console.error('Error fetching endpoint stats:', error);
-    return [];
-  }
-
-  return data || [];
+  // Newest first, paged: our own test data undersells this table's real volume (it was seeded at
+  // roughly daily granularity), but real production traffic flushes roughly once a minute per
+  // endpoint — a customer with even a modest number of endpoints under real traffic can exceed
+  // the ~1000-row server-side cap within a single 24h window. A bigger .limit() alone can't get
+  // past that, only paging can — same bug class already fixed for session_traces/rollups.
+  return fetchAllPages<EndpointStatsRow>(
+    (from, to) =>
+      supabase
+        .from('endpoint_stats')
+        .select('*')
+        .eq('team_id', teamId)
+        .gte('window_start', sinceMs)
+        .order('window_start', { ascending: false })
+        .range(from, to),
+    MAX_ROWS
+  );
 }
 
 export async function fetchSessionTraces(teamId: string, sinceMs: number): Promise<SessionTraceRow[]> {
@@ -76,20 +82,17 @@ export async function fetchSessionTraces(teamId: string, sinceMs: number): Promi
 }
 
 export async function fetchViolations(teamId: string, sinceMs: number): Promise<Violation[]> {
-  const { data, error } = await supabase
-    .from('violations')
-    .select('*')
-    .eq('team_id', teamId)
-    .gte('created_at', new Date(sinceMs).toISOString())
-    .order('created_at', { ascending: false })
-    .limit(MAX_VIOLATION_ROWS);
-
-  if (error) {
-    console.error('Error fetching violations:', error);
-    return [];
-  }
-
-  return data || [];
+  return fetchAllPages<Violation>(
+    (from, to) =>
+      supabase
+        .from('violations')
+        .select('*')
+        .eq('team_id', teamId)
+        .gte('created_at', new Date(sinceMs).toISOString())
+        .order('created_at', { ascending: false })
+        .range(from, to),
+    MAX_VIOLATION_ROWS
+  );
 }
 
 export async function fetchDailyRollups(teamId: string, sinceMs: number): Promise<EndpointDailyRollupRow[]> {
