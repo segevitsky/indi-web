@@ -15,7 +15,46 @@
 -- No pruning — every table just keeps growing (deliberate choice, see plan/discussion). Uses
 -- ON CONFLICT DO UPDATE throughout so re-running for the same date is always safe.
 --
--- Relies on _fake_latency_buckets and _fake_session_events, already created by 003/004.
+-- Relies on _fake_latency_buckets and _fake_session_events, already created by 003/004, plus
+-- _maybe_continue_after_slow_call (defined below) — the one place a session's length actually
+-- depends on how slow a prior call turned out to be, instead of being decided up front.
+
+-- Looks at the durMs of the last event already in `events` and rolls a probability (skewed by
+-- whether that call exceeded slow_threshold_ms) for whether to append one more event. Returns the
+-- array unchanged if the roll says stop, or extended with a new jittered event (same jitter/gap
+-- formula as _fake_session_events) if it says continue. This is what gives a mined journey's
+-- drop-off signal something real to find — before this, which endpoints/how-many-steps a session
+-- had was decided before any latency existed, so there was no genuine correlation to detect.
+CREATE OR REPLACE FUNCTION _maybe_continue_after_slow_call(
+  events jsonb,
+  slow_threshold_ms int,
+  continue_prob_if_slow numeric,
+  continue_prob_if_fast numeric,
+  next_step text,
+  next_method text,
+  next_base_dur int,
+  next_page text
+) RETURNS jsonb AS $$
+DECLARE
+  last_event jsonb := events -> (jsonb_array_length(events) - 1);
+  last_dur int := (last_event ->> 'durMs')::int;
+  last_end bigint := (last_event ->> 'tOffsetMs')::bigint + last_dur;
+  continue_prob numeric;
+  gap int;
+  next_dur int;
+BEGIN
+  continue_prob := CASE WHEN last_dur > slow_threshold_ms THEN continue_prob_if_slow ELSE continue_prob_if_fast END;
+  IF random() > continue_prob THEN
+    RETURN events;
+  END IF;
+  gap := 300 + (random() * 2200)::int;
+  next_dur := GREATEST(20, (next_base_dur * (0.8 + random() * 0.4))::int);
+  RETURN events || jsonb_build_object(
+    'step', next_step, 'method', next_method, 'status', 200,
+    'tOffsetMs', last_end + gap, 'durMs', next_dur, 'page', next_page
+  );
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION seed_one_day_of_meridian_data(target_date date)
 RETURNS void
@@ -138,18 +177,21 @@ BEGIN
   FOR i IN 1..n_employees LOOP
     session_start := day_start_ms + (8 + random() * 11)::bigint * 3600000;
     r := random();
-    IF r < 0.5 THEN
+    -- 65% combined (was a fixed 50%-always-stops / 15%-always-continues split): now one branch
+    -- whose length genuinely depends on how slow the time-off/balance call turns out to be —
+    -- slow gets a 25% chance of continuing to time-off/requests, fast gets 80%. Real randomness,
+    -- not a scripted outcome, but a real ~55-point gap for the drop-off signal to find.
+    IF r < 0.65 THEN
       events := _fake_session_events(
         ARRAY['/api/people/:id', '/api/time-off/balance/:id'],
         ARRAY['GET', 'GET'], ARRAY[80, 1200], ARRAY['/dashboard', '/time-off']);
-    ELSIF r < 0.7 THEN
+      events := _maybe_continue_after_slow_call(
+        events, 1000, 0.25, 0.80,
+        '/api/time-off/requests', 'POST', 200, '/time-off/new');
+    ELSIF r < 0.85 THEN
       events := _fake_session_events(
         ARRAY['/api/people/:id', '/api/attendance/clock'],
         ARRAY['GET', 'POST'], ARRAY[80, 60], ARRAY['/dashboard', '/attendance']);
-    ELSIF r < 0.85 THEN
-      events := _fake_session_events(
-        ARRAY['/api/people/:id', '/api/time-off/balance/:id', '/api/time-off/requests'],
-        ARRAY['GET', 'GET', 'POST'], ARRAY[80, 1200, 200], ARRAY['/dashboard', '/time-off', '/time-off/new']);
     ELSE
       events := _fake_session_events(
         ARRAY['/api/people/:id', '/api/payroll/salary-history/:id'],

@@ -92,3 +92,27 @@ non-Meridian noise for this team:
   `/api/users`, `/test`) — these were **replaced** by the Meridian violations in `006`.
 
 Net result: the three data tables now contain **Meridian-only** data.
+
+## `009_regenerate_employee_flows_with_dropoff_correlation.sql` — run 2026-07-24
+
+Checked against 30 real days of data whether the dashboard's drop-off-correlation feature had ever
+actually fired — it hadn't. Root cause: a session's flow (which endpoints, how many steps) was
+decided before any call's latency existed, so `/api/time-off/balance/:id` sessions either always
+stopped right after it or always continued to a third step, independent of how slow that call
+turned out to be — nothing correlated for the feature to find, however well-calibrated its
+thresholds were.
+
+Fixed in `008` (`_maybe_continue_after_slow_call`, applied to the employee flow branch — now a
+genuine, randomly-realized probability skew: 25% chance of continuing after a slow call, 80% after
+a fast one, both against the same 1000ms threshold the real feature measures against). That only
+fixes new days going forward, though — the ~90 days of `session_traces` already in the table were
+from the old, uncorrelated logic. `009` wipes `session_traces` for this team and re-loops
+`seed_one_day_of_meridian_data` (already fixed) over the past 90 real calendar days, regenerating
+everything with the corrected logic. (`endpoint_stats`/`endpoint_daily_rollups`/`violations` don't
+need an explicit wipe first — they're deleted/upserted by `window_start`/`day`/date-range, all
+consistent regardless of which script produced them, so re-looping the function naturally
+refreshes them too; harmless collateral churn, not a real change to any of their conclusions.)
+
+Verified after running: the drop-off signal now fires for real —
+`/api/people/:id → /api/time-off/balance/:id`, 43 "healthy" sessions continued 83.7% of the time,
+394 "moderate" (slow) sessions only 25.9% — a genuine ~58-point gap.
