@@ -20,6 +20,7 @@ import {
   HelpCircle,
   TrendingUp,
   Radar,
+  ChevronDown,
   X,
 } from 'lucide-react';
 import { supabase, type Team, type Indicator, type Violation } from './supabase/config';
@@ -38,7 +39,7 @@ import type {
   WeeklyTrendPoint,
 } from './insights/types';
 import { mineJourneys } from './journeys/mine';
-import type { Funnel, JourneyFlow, JourneysResult, SessionTraceRow, SeverityTier } from './journeys/types';
+import type { DropOffSignal, Funnel, JourneyFlow, JourneysResult, SessionTraceRow, SeverityTier } from './journeys/types';
 import type { User } from '@supabase/supabase-js';
 
 const TIME_RANGE_MS = 24 * 60 * 60 * 1000;
@@ -102,6 +103,48 @@ const SEVERITY_TIER_LABEL: Record<SeverityTier, string> = {
   moderate: 'moderately slow',
   severe: 'severely slow or failed',
 };
+
+/** Shared drop-off-signal copy — used both inline on a JourneyCard and, bigger, on the dashboard's
+ * headline finding, so the two never drift into inconsistent phrasing for the same underlying claim. */
+function dropOffFindingText(sig: DropOffSignal): React.ReactNode {
+  const lowerRate = Math.round((sig.lowerContinuedCount / sig.lowerSessionCount) * 100);
+  const higherRate = Math.round((sig.higherContinuedCount / sig.higherSessionCount) * 100);
+  const lead = sig.isEndOfFlow
+    ? `Sessions were more likely to end there entirely after a `
+    : `Sessions were less likely to continue after a `;
+  return (
+    <>
+      {lead}
+      {SEVERITY_TIER_LABEL[sig.higherTier]} response at <code>{sig.step}</code>
+      {sig.isEndOfFlow && ' (the last step of this flow)'} &mdash;{' '}
+      {sig.lowerContinuedCount}/{sig.lowerSessionCount} ({lowerRate}%) went on to do something else when it was{' '}
+      {SEVERITY_TIER_LABEL[sig.lowerTier]}, vs {sig.higherContinuedCount}/{sig.higherSessionCount} ({higherRate}%)
+      when it was {SEVERITY_TIER_LABEL[sig.higherTier]}
+      {sig.thirdTier && (
+        <>
+          , and {sig.thirdTier.continuedCount}/{sig.thirdTier.sessionCount} (
+          {Math.round((sig.thirdTier.continuedCount / sig.thirdTier.sessionCount) * 100)}%) when it was{' '}
+          {SEVERITY_TIER_LABEL[sig.thirdTier.tier]} &mdash; a step-by-step decline
+        </>
+      )}
+      . <span className="text-gray-500">An observed pattern, not proven cause and effect.</span>
+    </>
+  );
+}
+
+/** Picks the single biggest-gap drop-off signal across every mined journey, if any exist —
+ * the "one thing" a headline card should feature, not a full list. */
+function findBestDropOffSignal(journeys: JourneysResult | null): { flow: JourneyFlow; signal: DropOffSignal } | null {
+  if (!journeys) return null;
+  let best: { flow: JourneyFlow; signal: DropOffSignal; gap: number } | null = null;
+  for (const flow of journeys.flows) {
+    for (const sig of flow.dropOffSignals) {
+      const gap = sig.lowerContinuedCount / sig.lowerSessionCount - sig.higherContinuedCount / sig.higherSessionCount;
+      if (!best || gap > best.gap) best = { flow, signal: sig, gap };
+    }
+  }
+  return best ? { flow: best.flow, signal: best.signal } : null;
+}
 
 /** Shared hover tooltip, rendered via a portal into document.body rather than positioned
  * relative to its trigger — this is what keeps it from getting clipped by an ancestor's
@@ -438,6 +481,35 @@ const PriorityFixCard: React.FC<{
         {endpoint.callCount.toLocaleString()} calls, {(endpoint.errorRate * 100).toFixed(1)}% error rate,{' '}
         {endpoint.duplicateCount} duplicate calls, p95 {endpoint.p95}ms.
       </p>
+    </div>
+  );
+};
+
+/** The one thing at the top of the page — leads with the single biggest drop-off finding across
+ * every mined journey when one exists (the most differentiated, hardest-to-fake kind of insight
+ * this product produces), falling back to the same cost-based priority fix as before when it
+ * doesn't. Replaces PriorityFixCard's old standalone top-of-page slot rather than duplicating it. */
+const HeadlineFindingCard: React.FC<{
+  journeys: JourneysResult | null;
+  endpoint: EndpointInsight | null;
+  aiPriorityFix?: { title: string; rationale: string };
+  stale?: boolean;
+}> = ({ journeys, endpoint, aiPriorityFix, stale }) => {
+  const best = findBestDropOffSignal(journeys);
+
+  if (!best) {
+    return <PriorityFixCard endpoint={endpoint} aiPriorityFix={aiPriorityFix} stale={stale} />;
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-orange-950 to-gray-900 border border-orange-800 rounded-2xl p-6 mb-8">
+      <div className="flex items-center gap-2 mb-3">
+        <TrendingDown className="w-5 h-5 text-orange-400" />
+        <h3 className="text-lg font-bold text-white">Biggest Finding</h3>
+        <span className="text-xs text-gray-500 ml-auto">from real visits, not a guess</span>
+      </div>
+      <code className="text-sm font-mono text-orange-300 block mb-2">{best.flow.flow.steps.join(' → ')}</code>
+      <p className="text-sm text-gray-300">{dropOffFindingText(best.signal)}</p>
     </div>
   );
 };
@@ -819,31 +891,11 @@ const JourneyCard: React.FC<{
     )}
     {journey.dropOffSignals.length > 0 && (
       <div className="mt-3 space-y-2">
-        {journey.dropOffSignals.map((sig) => {
-          const lowerRate = Math.round((sig.lowerContinuedCount / sig.lowerSessionCount) * 100);
-          const higherRate = Math.round((sig.higherContinuedCount / sig.higherSessionCount) * 100);
-          const lead = sig.isEndOfFlow
-            ? `Sessions were more likely to end there entirely after a `
-            : `Sessions were less likely to continue after a `;
-          return (
-            <p key={sig.step} className="text-xs text-orange-400">
-              {lead}
-              {SEVERITY_TIER_LABEL[sig.higherTier]} response at <code>{sig.step}</code>
-              {sig.isEndOfFlow && ' (the last step of this flow)'} &mdash;{' '}
-              {sig.lowerContinuedCount}/{sig.lowerSessionCount} ({lowerRate}%) went on to do something else when it
-              was {SEVERITY_TIER_LABEL[sig.lowerTier]}, vs {sig.higherContinuedCount}/{sig.higherSessionCount} (
-              {higherRate}%) when it was {SEVERITY_TIER_LABEL[sig.higherTier]}
-              {sig.thirdTier && (
-                <>
-                  , and {sig.thirdTier.continuedCount}/{sig.thirdTier.sessionCount} (
-                  {Math.round((sig.thirdTier.continuedCount / sig.thirdTier.sessionCount) * 100)}%) when it was{' '}
-                  {SEVERITY_TIER_LABEL[sig.thirdTier.tier]} &mdash; a step-by-step decline
-                </>
-              )}
-              . <span className="text-gray-500">An observed pattern, not proven cause and effect.</span>
-            </p>
-          );
-        })}
+        {journey.dropOffSignals.map((sig) => (
+          <p key={sig.step} className="text-xs text-orange-400">
+            {dropOffFindingText(sig)}
+          </p>
+        ))}
       </div>
     )}
   </div>
@@ -906,10 +958,17 @@ const Dashboard = () => {
   const [copied, setCopied] = useState(false);
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [violationFilter, setViolationFilter] = useState<string[] | null>(null);
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
 
   const handleFilterViolations = (endpoints: string[]) => {
     setViolationFilter(endpoints);
-    document.getElementById('contract-violations')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Contract Violations lives inside the collapsible "More Details" area — force it open first,
+    // then wait a tick for that section to actually render before the target element exists to
+    // scroll to.
+    setDetailsExpanded(true);
+    requestAnimationFrame(() => {
+      document.getElementById('contract-violations')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
   // KPIs / Slow Endpoints / Money Leaking / Priority Fix respect the timeframe picker — 24h reads
@@ -1215,12 +1274,11 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {trend && <TrendsSection trend={trend} />}
-        <UnusualActivitySection anomalies={anomalies} />
-        <TimeRangePicker value={timeRange} onChange={setTimeRange} />
-        {insights && <KpiRow insights={insights} timeRange={timeRange} />}
+        {/* The one thing to see first — biggest real finding, or the same priority fix as before
+            when there isn't a drop-off signal yet. */}
         {insights && (
-          <PriorityFixCard
+          <HeadlineFindingCard
+            journeys={journeys}
             endpoint={
               insights.endpoints.length > 0
                 ? [...insights.endpoints].sort((a, b) => wasteScore(b) - wasteScore(a))[0]
@@ -1231,32 +1289,55 @@ const Dashboard = () => {
           />
         )}
 
-        {insights && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <MoneyLeakingSection endpoints={insights.endpoints} timeRange={timeRange} />
-            <QuickWinsSection endpoints={insights.endpoints} />
-          </div>
-        )}
+        <TimeRangePicker value={timeRange} onChange={setTimeRange} />
+        {insights && <KpiRow insights={insights} timeRange={timeRange} />}
 
-        {recommendations?.recommendations && recommendations.recommendations.length > 0 && (
+        {/* Journeys moved up from its old buried spot — it's the section that can carry the
+            headline finding above, so it belongs right next to it, not eight sections down. */}
+        {journeys && (
           <div className="mb-8">
-            <AIRecommendationsSection recommendations={recommendations.recommendations} />
+            <JourneysSection
+              journeys={journeys}
+              violations={scopedViolations}
+              onFilterViolations={handleFilterViolations}
+              timeRange={timeRange}
+            />
           </div>
         )}
 
-        {insights && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <SlowEndpointsSection endpoints={insights.endpoints} />
-            {journeys && (
-              <JourneysSection
-                journeys={journeys}
-                violations={scopedViolations}
-                onFilterViolations={handleFilterViolations}
-                timeRange={timeRange}
-              />
+        {/* Everything else, collapsed by default — the routine/detail sections that don't need to
+            compete with the headline finding for attention on first load. */}
+        <button
+          onClick={() => setDetailsExpanded((e) => !e)}
+          className="w-full flex items-center justify-center gap-2 py-3 mb-8 text-sm text-gray-400 hover:text-white border border-gray-800 hover:border-gray-700 rounded-xl transition-colors"
+        >
+          {detailsExpanded ? 'Hide' : 'Show'} more details
+          <ChevronDown className={`w-4 h-4 transition-transform ${detailsExpanded ? 'rotate-180' : ''}`} />
+        </button>
+
+        {detailsExpanded && (
+          <>
+            {trend && <TrendsSection trend={trend} />}
+            <UnusualActivitySection anomalies={anomalies} />
+
+            {insights && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <MoneyLeakingSection endpoints={insights.endpoints} timeRange={timeRange} />
+                <QuickWinsSection endpoints={insights.endpoints} />
+              </div>
             )}
-          </div>
-        )}
+
+            {recommendations?.recommendations && recommendations.recommendations.length > 0 && (
+              <div className="mb-8">
+                <AIRecommendationsSection recommendations={recommendations.recommendations} />
+              </div>
+            )}
+
+            {insights && (
+              <div className="mb-8">
+                <SlowEndpointsSection endpoints={insights.endpoints} />
+              </div>
+            )}
 
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1379,12 +1460,12 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Usage Instructions */}
-        <div className="mt-8 bg-gray-900 border border-gray-800 rounded-2xl shadow-lg p-6">
-          <h3 className="text-xl font-bold text-white mb-4">Quick Start</h3>
-          <div className="bg-black rounded-lg p-4 overflow-x-auto">
-            <pre className="text-sm text-gray-100">
-              <code>{`import { indi } from '@indi/runtime';
+            {/* Usage Instructions */}
+            <div className="mt-8 bg-gray-900 border border-gray-800 rounded-2xl shadow-lg p-6">
+              <h3 className="text-xl font-bold text-white mb-4">Quick Start</h3>
+              <div className="bg-black rounded-lg p-4 overflow-x-auto">
+                <pre className="text-sm text-gray-100">
+                  <code>{`import { indi } from '@indi/runtime';
 
 indi.init({
   apiKey: '${team?.api_key || 'your-api-key'}',
@@ -1393,9 +1474,11 @@ indi.init({
 
 indi.watch('/api/users', { learningPeriod: 20 });
 indi.watch('/api/orders', { maxResponseTime: 500 });`}</code>
-            </pre>
-          </div>
-        </div>
+                </pre>
+              </div>
+            </div>
+          </>
+        )}
       </div>
       {glossaryOpen && <GlossaryModal onClose={() => setGlossaryOpen(false)} />}
     </div>
